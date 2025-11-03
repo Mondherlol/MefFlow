@@ -1,7 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { tenant } from "./tenant";
-import Landing from "./pages/Landing";
+
+// Super Admin pages
 import SuperAdminLogin from "./pages/SuperAdmin/Login";
+import Dashboard from "./pages/SuperAdmin/Dashboard";
+
+// Other pages
+import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
@@ -16,6 +21,9 @@ export default function App() {
         <>
           <Route path="/" element={<Landing />} />
           <Route path="/__superadmin/login" element={<SuperAdminLogin />} />
+          <Route path="/__superadmin/dashboard" element={<Dashboard />} />
+          <Route path="/__superadmin/*" element={<Navigate to="/__superadmin/login" replace />} />
+
           <Route path="*" element={<NotFound />} />
         </>
       ) : (
