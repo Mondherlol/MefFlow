@@ -14,6 +14,8 @@ import {
 import Section from "./Section";
 import Button from "./Button";
 import Badge from "./Badge";
+import DeleteConfirm from "./DeleteConfirm";
+import SlugModal from "./SlugModal";
 import { useNavigate } from "react-router-dom";
 import api from "../../../api/axios";
 import toast from "react-hot-toast";
@@ -27,6 +29,10 @@ export default function ClinicsList({ tokens }) {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
+  // UI state for per-row menu/modal/delete
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  const [slugModal, setSlugModal] = useState({ open: false, clinic: null, value: "" });
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, clinic: null });
 
   // Fetch clinics from server when search/page/perPage/status change.
   useEffect(() => {
@@ -117,6 +123,50 @@ export default function ClinicsList({ tokens }) {
     // we intentionally omit deps so we add the listener once; handler reads latest params via ref
   }, []);
 
+  // Close active menu on outside click
+  useEffect(() => {
+    const onDocClick = () => setActiveMenuId(null);
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
+  // Action: delete clinic
+  const handleDeleteClinic = async () => {
+    const clinic = deleteConfirm.clinic;
+    if (!clinic) return;
+    setIsLoading(true);
+    try {
+      const resp = await api.delete(`/api/clinics/${clinic.id}/`);
+      if (resp.status === 200 || resp.status === 204) {
+        toast.success('Clinique supprimée');
+        setDeleteConfirm({ open: false, clinic: null });
+        await reloadClinicsImmediate();
+      }
+    } catch (err) {
+      toast.error('Erreur lors de la suppression de la clinique');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Action: change clinic status
+  const handleChangeStatus = async (clinicId, newStatus) => {
+    setIsLoading(true);
+    try {
+      const resp = await api.post(`/api/clinics/${clinicId}/set_status/`, { status: newStatus });
+      if (resp.status === 200) {
+        let etat = newStatus === "ACTIVE" ? "réactivée" : "mise en pause";
+        toast.success(`Clinique ${etat} avec succès`);
+        await reloadClinicsImmediate();
+      } 
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour du statut de la clinique');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   // Loading skeleton matching clinics table layout
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -151,6 +201,7 @@ export default function ClinicsList({ tokens }) {
   const displayed = useMemo(() => clinics, [clinics]);
 
   return (
+    <>
     <Section
       title="Gestion des cliniques"
       right={
@@ -210,7 +261,7 @@ export default function ClinicsList({ tokens }) {
                   tabIndex={0}
                   onClick={() => navigate(`/__superadmin/clinic-infos/${c.id}`)}
                   onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/__superadmin/clinic-infos/${c.id}`); }}
-                  className={`grid grid-cols-12 gap-4 px-4 py-3 text-sm ${tokens.rowHover} cursor-pointer`}
+                  className={`relative grid grid-cols-12 gap-4 px-4 py-3 text-sm ${tokens.rowHover} cursor-pointer`}
                 >
               <div className="col-span-4 flex items-center gap-3">
                 <div className="grid h-9 w-9 place-items-center rounded-lg bg-sky-100 text-sky-800 ring-1 ring-sky-200">
@@ -244,17 +295,63 @@ export default function ClinicsList({ tokens }) {
                   <Settings className="h-4 w-4" /> Gérer
                 </Button>
                 {c.status === "ACTIVE" ? (
-                  <Button variant="outline" className="px-3 py-1.5" title="Mettre en pause">
+                  <Button variant="outline" className="px-3 py-1.5" title="Mettre en pause" onClick={(e) => { e.stopPropagation(); handleChangeStatus(c.id, "PAUSED"); }}>
                     <PauseCircle className="h-4 w-4" /> Mettre en pause
                   </Button>
                 ) : (
-                  <Button variant="primary" className="px-3 py-1.5" title="Réactiver">
+                  <Button variant="primary" className="px-3 py-1.5" title="Réactiver" onClick={(e) => { e.stopPropagation(); handleChangeStatus(c.id, "ACTIVE"); }}>
                     <PlayCircle className="h-4 w-4" /> Réactiver
                   </Button>
                 )}
-                <Button variant="outline" className="px-3 py-1.5" title="Plus">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                {/* More / context menu */}
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="px-3 py-1.5"
+                    title="Plus"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMenuId((prev) => (prev === c.id ? null : c.id));
+                    }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+
+                  {activeMenuId === c.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className={`absolute right-0 mt-2 w-48 rounded-lg bg-white shadow-lg z-50 ${tokens.card} ${tokens.cardHover} border border-slate-200`}
+                    >
+                      <ul className="py-1">
+                        <li>
+                          <button
+                            className="w-full cursor-pointer text-left px-4 py-2 text-sm hover:bg-slate-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(null);
+                              setSlugModal({ open: true, clinic: c, value: c.slug || "" });
+                            }}
+                          >
+                            Modifier le slug
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            className="w-full cursor-pointer text-left px-4 py-2 text-sm text-red-600 hover:bg-slate-50"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(null);
+                              setDeleteConfirm({ open: true, clinic: c });
+                            }}
+                          >
+                            Supprimer
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </li>
           ))}
@@ -315,5 +412,23 @@ export default function ClinicsList({ tokens }) {
         </div>
       </div>
     </Section>
+
+    <DeleteConfirm
+      open={deleteConfirm.open}
+      clinic={deleteConfirm.clinic}
+      tokens={tokens}
+      onClose={() => setDeleteConfirm({ open: false, clinic: null })}
+      onConfirm={handleDeleteClinic}
+    />
+
+    <SlugModal
+      open={slugModal.open}
+      clinic={slugModal.clinic}
+      tokens={tokens}
+      closeModal={() => setSlugModal({ open: false, clinic: null, value: '' })}
+      reloadClinics={reloadClinicsImmediate}
+    />
+
+    </>
   );
 }

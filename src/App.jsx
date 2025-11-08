@@ -33,40 +33,43 @@ export default function App() {
         <Navbar />  
       }
       <Routes>
+
+      <Route path="*" element={<NotFound />} />
+
+      {/* Super Admin routes */}
+        <Route path="/__superadmin/login" element={<SuperAdminLogin />} />
+        <Route
+          path="/__superadmin/dashboard"
+          element={
+            <ProtectedRoute roles={["SUPER_ADMIN"]}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        
+        <Route path="/__superadmin/clinic-request/:id" 
+          element={
+            <ProtectedRoute roles={["SUPER_ADMIN"]}>
+              <ClinicRequest />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route path="/__superadmin/clinic-infos/:id" 
+          element={
+            <ProtectedRoute roles={["SUPER_ADMIN"]}>
+              <ClinicInfos />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route path="/__superadmin/*" element={<Navigate to="/__superadmin/login" replace />} />
+      
       {onRoot ? (
         <>
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/__superadmin/login" element={<SuperAdminLogin />} />
-
-          <Route
-            path="/__superadmin/dashboard"
-            element={
-              <ProtectedRoute roles={["SUPER_ADMIN"]}>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route path="/__superadmin/clinic-request/:id" 
-            element={
-              <ProtectedRoute roles={["SUPER_ADMIN"]}>
-                <ClinicRequest />
-              </ProtectedRoute>
-            } 
-          />
-
-          <Route path="/__superadmin/clinic-infos/:id" 
-            element={
-              <ProtectedRoute roles={["SUPER_ADMIN"]}>
-                <ClinicInfos />
-              </ProtectedRoute>
-            } 
-          />
-
-          <Route path="/__superadmin/*" element={<Navigate to="/__superadmin/login" replace />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="*" element={<NotFound />} />
+   
         </>
       ) : (
         // Ici plus tard: routes pour la clinique (login/inscription/espaces).

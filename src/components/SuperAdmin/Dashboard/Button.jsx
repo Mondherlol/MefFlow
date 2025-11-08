@@ -1,5 +1,5 @@
 const tokens = {
-  brandGrad: "bg-gradient-to-r from-sky-600 to-indigo-600",
+  brandGrad: "bg-gradient-to-r from-sky-600 to-sky-400",
   orangeBtn: "bg-orange-500 hover:bg-orange-600 text-white",
   ghostBtn:
     "bg-transparent text-sky-800 hover:bg-sky-50 hover:text-sky-900 underline decoration-orange-300/80 underline-offset-4",
@@ -18,7 +18,7 @@ function Button({ children, variant = "primary", className = "", ...rest }) {
   };
   return (
     <button
-      className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm transition ${variants[variant]} ${className}`}
+      className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm transition ${variants[variant]} ${className}`}
       {...rest}
     >
       {children}
