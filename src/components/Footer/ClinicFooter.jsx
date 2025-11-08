@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { useClinic } from "../../context/clinicContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 const tokens = {
   container: "mx-auto max-w-7xl px-6",
   surface: "bg-white",
@@ -85,6 +87,8 @@ export default function ClinicFooter({ showNewsletter = true }) {
     setEmail("");
   };
 
+  if(!clinic) return null;
+
   return (
     <footer className={`${tokens.surface} border-t ${tokens.border}`} style={{ color: theme.text, backgroundColor: theme.bg }}>
       <div className={`${tokens.container} py-14`}>
@@ -92,9 +96,13 @@ export default function ClinicFooter({ showNewsletter = true }) {
           {/* Brand */}
           <div className="md:col-span-2">
             <button onClick={() => go("home")} className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl grid place-items-center text-white font-bold" style={brandGradient}>
-                {clinic?.name ? clinic.name[0] : "C"}
-              </div>
+              {clinic?.logo_url ? (
+                <img src={`${API_URL}/${clinic.logo_url}`} alt="Logo de la clinique" className="h-10 w-10 rounded-xl object-cover" />
+              ) : (
+                <div className="h-10 w-10 rounded-xl grid place-items-center text-white font-bold" style={brandGradient}>
+                  {clinic?.name ? clinic.name[0] : "C"}
+                </div>
+              )}
               <span className="text-lg font-semibold text-slate-900">
                 {clinic?.name || "Votre Clinique"}
               </span>

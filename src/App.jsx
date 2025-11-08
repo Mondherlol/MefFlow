@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 // Components
 import Navbar from "./components/Navbar/Navbar";
 import SuperAdminNavbar from "./components/Navbar/SuperAdminNavbar";
+import ClinicNavbar from "./components/Navbar/ClinicNavbar";
 import Footer from "./components/Footer/Footer";
 import ClinicFooter from "./components/Footer/ClinicFooter";
 import { useAuth } from "./context/authContext";
@@ -40,8 +41,7 @@ export default function App() {
     <>
       <Toaster />
       { user && !authLoading && user.role === "SUPER_ADMIN" ?
-        <SuperAdminNavbar /> :
-        <Navbar />  
+        <SuperAdminNavbar /> : onRoot ? <Navbar /> : <ClinicNavbar />
       }
       <Routes>
 
@@ -91,11 +91,13 @@ export default function App() {
       ) : (
         // Routes pour les cliniques en sous-domaine 
               <>
-                <Route path="/" element={
+                <Route path="/home" element={
                   <ClinicRoute>
                     <Home/>
                   </ClinicRoute>
                 } />
+
+                <Route path="/" element={<Navigate to="/home" replace />} />
 
                 <Route path="/login" element={
                   <ClinicRoute>

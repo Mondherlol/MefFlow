@@ -30,8 +30,6 @@ export const ClinicProvider = ({ children }) => {
   const [clinic, setClinic] = useState();
   const [loading, setLoading] = useState(true);
 
-
-
   useEffect(() => {
     // maintenant recuperer la clinique
     let mounted = true;

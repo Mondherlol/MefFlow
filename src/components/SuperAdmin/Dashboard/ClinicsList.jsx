@@ -279,7 +279,14 @@ export default function ClinicsList({ tokens }) {
               </div>
 
               <div className="col-span-2 flex items-center gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(`${c.slug}.medflow.localhost:5173`);
+                    toast.success("Domaine copié dans le presse-papiers");
+                  }}
+                  title="Cliquer pour copier le domaine"
+                  >
                   <Globe className="h-4 w-4 text-slate-400" />
                   <span className="truncate text-slate-700">{c.slug}.medflow.tn</span>
                 </div>
