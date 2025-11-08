@@ -6,11 +6,15 @@ import SuperAdminLogin from "./pages/SuperAdmin/Login";
 import Dashboard from "./pages/SuperAdmin/Dashboard";
 import ClinicRequest from "./pages/SuperAdmin/ClinicRequest";
 import ClinicInfos from "./pages/SuperAdmin/ClinicInfos";
+import ManageAdmins from "./pages/SuperAdmin/ManageAdmins";
 
 // Clinic pages
 import Home from "./pages/Clinic/Home";
 import Login from "./pages/Clinic/Login";
 import SignUp from "./pages/Clinic/SignUp";
+
+// Admin pages
+import HomeAdmin from "./pages/Admin/Home";
 
 // Other pages
 import Landing from "./pages/Landing";
@@ -70,6 +74,12 @@ export default function App() {
           } 
         />
 
+        <Route path="/__superadmin/manage-admins/:id" element={
+          <ProtectedRoute roles={["SUPER_ADMIN"]}>
+            <ManageAdmins />
+          </ProtectedRoute>
+        } />
+
         <Route path="/__superadmin/*" element={<Navigate to="/__superadmin/login" replace />} />
       
       {onRoot ? (
@@ -98,6 +108,14 @@ export default function App() {
                     <SignUp />
                   </ClinicRoute>
                 } />
+
+              <Route path="/admin" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <HomeAdmin />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
               </>
       )}
       </Routes>

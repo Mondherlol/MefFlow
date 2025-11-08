@@ -51,9 +51,9 @@ import { useClinic } from "../../context/clinicContext";
  *  Composant principal
  *  ------------------------------------------------------------- */
 export default function Home() {
-  const { clinic } = useClinic();
+//   const { clinic } = useClinic();
   const [isLoading, setIsLoading] = useState(true);
-//   const clinic = mockClinicBlue; // ⚠️ remplacé par vos données dynamiques plus tard
+  const clinic = mockClinicBlue; // ⚠️ remplacé par vos données dynamiques plus tard
 
   const theme = {
     primary: clinic?.primaryColor || "#3b82f6",

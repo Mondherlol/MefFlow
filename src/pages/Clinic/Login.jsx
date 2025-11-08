@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, CalendarCheck, Stethoscope, MessageSquare } from "lucide-react";
 import { useClinic } from "../../context/clinicContext";
+import toast from "react-hot-toast";
+import api from "../../api/axios";
 
 const withAlpha = (hex, a = 1) => {
   if (!hex || hex[0] !== "#") return `rgba(0,0,0,${a})`;
@@ -27,21 +29,15 @@ const Card = ({ className = "", children }) => (
   </div>
 );
 
-export default function LoginPatient({ onSubmit }) {
-  const { clinic } = useClinic?.() || { clinic: null };
+export default function Login() {
+  const { clinic } = useClinic();
   const theme = useMemo(() => ({
     primary: clinic?.primaryColor || "#3b82f6",
     secondary: clinic?.secondaryColor || "#1e40af",
     accent: clinic?.accentColor || "#f59e0b",
-    bg: clinic?.backgroundColor || "#ffffff",
-    text: clinic?.textColor || "#0f172a",
-    name: clinic?.name || "Votre Clinique",
   }), [clinic]);
 
   const navigate = useNavigate();
-  const { search } = useLocation();
-  const params = new URLSearchParams(search);
-  const next = params.get("next") || "/patient";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,6 +45,19 @@ export default function LoginPatient({ onSubmit }) {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+
+  useEffect(() => {
+    // Charger les identifiants mémorisés
+    const savedEmail = localStorage.getItem("email");
+    const savedPassword = localStorage.getItem("password");
+    if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRemember(true);
+    }
+    }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,24 +71,39 @@ export default function LoginPatient({ onSubmit }) {
 
     try {
       setLoading(true);
-      // Branchez ici votre appel API d'authentification
-      // ex: const { data } = await api.post("/api/auth/patient/login", { email, password, remember });
-      // save token, then navigate(next)
-      await new Promise((r) => setTimeout(r, 800));
+        // Appel API de connexion
+        const response = await api.post("/api/auth/login/", {
+          clinic_id : clinic.id,
+          email,
+          password,
+        });
+        if (response.status === 200) {
+            // Connexion réussie, redirection
+            toast.success("Connexion réussie !");
 
-      if (typeof onSubmit === "function") {
-        await onSubmit({ email, password, remember, next });
-      }
-      navigate(next, { replace: true });
+            if( remember ) {
+              // Stocker dans le localStorage
+              localStorage.setItem("email", email);
+              localStorage.setItem("password", password);
+            } else {
+              localStorage.removeItem("email");
+              localStorage.removeItem("password");
+            }
+            navigate("/patient", { replace: true });
+        }
     } catch (err) {
-      setError("Impossible de vous connecter. Vérifiez vos identifiants.");
+      if(err.response && err.response.data && err.response.data.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError("Impossible de vous connecter. Reessayez plus tard.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[100dvh] relative flex items-center justify-center px-6 py-12" style={{ backgroundColor: theme.bg, color: theme.text }}>
+    <div className="min-h-[70dvh] relative flex items-center justify-center px-6 py-12" >
       {/* Décor */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full blur-3xl opacity-25"
@@ -90,7 +114,7 @@ export default function LoginPatient({ onSubmit }) {
 
       <Card className="w-full max-w-5xl overflow-hidden">
         <div className="grid md:grid-cols-2">
-          {/* Bandeau gauche – bénéfices */}
+          {/* Bandeau gauche */}
           <div className="relative p-8 text-white" style={{ background: `linear-gradient(135deg, ${withAlpha(theme.primary,.98)}, ${withAlpha(theme.secondary,.98)})` }}>
             <div className="absolute inset-0 opacity-20" style={{ background: `radial-gradient(ellipse at 15% 10%, white 0%, transparent 45%)` }} />
             <div className="relative">

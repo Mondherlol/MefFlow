@@ -288,7 +288,9 @@ export default function ClinicsList({ tokens }) {
               <div className="col-span-1 flex items-center gap-2"><strong className="text-orange-500">{c.users} </strong> utilisateur{c.users > 1 ? "s" : ""}</div>
 
               <div className="col-span-5 flex items-center justify-end gap-2">
-                <Button variant="subtle" className="px-3 py-1.5">
+                <Button 
+                  onClick={(e) => { e.stopPropagation(); navigate(`/__superadmin/manage-admins/${c.id}`); }}
+                  variant="subtle" className="px-3 py-1.5">
                   <UsersRound className="h-4 w-4" /> Admins
                 </Button>
                 <Button variant="subtle" className="px-3 py-1.5">
