@@ -1,10 +1,12 @@
 // src/pages/admin/HomeAdmin.jsx
 import {
   Users, UserCog, Settings, Building2,
-  CreditCard, Receipt, BadgeDollarSign, Stethoscope
+  CreditCard, Receipt, BadgeDollarSign, Stethoscope,
+  ScanHeart
 } from 'lucide-react';
 import { useClinic } from '../../context/clinicContext';
 import { useAuth } from '../../context/authContext';
+import { useNavigate } from 'react-router-dom';
 
 const tokens = {
   // Couleurs: orange (primary) + sky (secondary) par défaut,
@@ -86,6 +88,7 @@ function AdminTile({ title, desc, tone = 'orange', icon: Icon, onClick, aria }) 
 const HomeAdmin = () => {
   const { user } = useAuth();
   const { clinic } = useClinic();
+  const navigate = useNavigate();
   const brand = tokens.brand(clinic);
 
   const stripeConnected =
@@ -165,28 +168,28 @@ const HomeAdmin = () => {
               desc="Création, modification et droits d’accès."
               tone="indigo"
               icon={UserCog}
-              onClick={() => console.log('Route: /admin/receptionnistes')}
+              onClick={() => navigate('/admin/receptionnistes')}
             />
             <AdminTile
               title="Gérer médecins"
               desc="Profils, spécialités, planning et disponibilités."
               tone="emerald"
               icon={Stethoscope}
-              onClick={() => console.log('Route: /admin/medecins')}
+              onClick={() => navigate('/admin/medecins')}
             />
             <AdminTile
               title="Gérer patients"
               desc="Historique, dossiers et rendez-vous."
               tone="sky"
               icon={Users}
-              onClick={() => console.log('Route: /admin/patients')}
+              onClick={() => navigate('/admin/patients')}
             />
             <AdminTile
               title="Infos clinique"
               desc="Coordonnées, horaires, couleurs, images, etc."
               tone="amber"
               icon={Settings}
-              onClick={() => console.log('Route: /admin/clinique')}
+              onClick={() => navigate('/admin/clinique')}
             />
           </div>
         </section>
@@ -201,29 +204,29 @@ const HomeAdmin = () => {
               title="Services"
               desc="Créer, catégoriser et publier vos actes médicaux."
               tone={brand.secondary}
-              icon={Building2}
-              onClick={() => console.log('Route: /admin/services')}
+              icon={ScanHeart}
+              onClick={() => navigate('/admin/services')}
             />
             <AdminTile
               title="Tarifs"
               desc="Grilles tarifaires, devis, et remises."
               tone={brand.primary}
               icon={BadgeDollarSign}
-              onClick={() => console.log('Route: /admin/tarifs')}
+              onClick={() => navigate('/admin/tarifs')}
             />
             <AdminTile
               title="Paiements Stripe"
               desc="Encaissements, remboursements, rapprochements."
               tone="violet"
               icon={CreditCard}
-              onClick={() => console.log('Route: /admin/billing/stripe')}
+              onClick={() => navigate('/admin/billing/stripe')}
             />
             <AdminTile
               title="Factures"
               desc="Liste, statut, export PDF/CSV et envoi email."
               tone="rose"
               icon={Receipt}
-              onClick={() => console.log('Route: /admin/factures')}
+              onClick={() => navigate('/admin/factures')}
             />
           </div>
         </section>

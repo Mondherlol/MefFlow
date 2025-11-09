@@ -15,6 +15,14 @@ import SignUp from "./pages/Clinic/SignUp";
 
 // Admin pages
 import HomeAdmin from "./pages/Admin/Home";
+import Receptionnistes from "./pages/Admin/Receptionnistes";
+import Medecins from "./pages/Admin/Medecins";
+import Patients from "./pages/Admin/Patients";
+import ClinicInfo from "./pages/Admin/ClinicInfo";
+import Services from "./pages/Admin/Services";
+import Tarifs from "./pages/Admin/Tarifs";
+import StripeBilling from "./pages/Admin/StripeBilling";
+import Factures from "./pages/Admin/Factures";
 
 // Other pages
 import Landing from "./pages/Landing";
@@ -115,6 +123,62 @@ export default function App() {
                 <ClinicRoute>
                   <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
                     <HomeAdmin />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/receptionnistes" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Receptionnistes />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/medecins" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Medecins />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/patients" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Patients />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/clinique" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <ClinicInfo />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/services" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Services />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/tarifs" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Tarifs />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/billing/stripe" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <StripeBilling />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+              <Route path="/admin/factures" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Factures />
                   </ProtectedRoute>
                 </ClinicRoute>
               } />
