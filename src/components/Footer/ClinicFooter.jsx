@@ -55,8 +55,7 @@ export default function ClinicFooter({ showNewsletter = true }) {
       primary: clinic?.primaryColor || "#3b82f6",
       secondary: clinic?.secondaryColor || "#1e40af",
       accent: clinic?.accentColor || "#f59e0b",
-      bg: clinic?.backgroundColor || "#ffffff",
-      text: clinic?.textColor || "#0f172a",
+      text: "#0f172a",
     }),
     [clinic]
   );
@@ -90,7 +89,7 @@ export default function ClinicFooter({ showNewsletter = true }) {
   if(!clinic) return null;
 
   return (
-    <footer className={`${tokens.surface} border-t ${tokens.border}`} style={{ color: theme.text, backgroundColor: theme.bg }}>
+    <footer className={`${tokens.surface} border-t ${tokens.border}`} style={{ color: theme.text }}>
       <div className={`${tokens.container} py-14`}>
         <div className="grid gap-10 md:grid-cols-5">
           {/* Brand */}

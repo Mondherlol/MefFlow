@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn, User, ArrowRight, UserPlus } from "lucide-react";
+import { Menu, X, LogIn, User, UserPlus, LogOut, LayoutDashboard } from "lucide-react";
 import { useClinic } from "../../context/clinicContext";
+import { useAuth } from "../../context/authContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -24,6 +25,7 @@ function clinicHash(hash, base = "/Home") {
 
 export default function ClinicNavbar() {
     const { clinic } = useClinic();
+    const { user , loading,logout } = useAuth();
     const clinicName = clinic?.name || "Clinique";
     const loc = useLocation();
     const navigate = useNavigate();
@@ -37,13 +39,19 @@ export default function ClinicNavbar() {
         { label: "Contact", hash: "contact" },
     ];
 
-    const isClinicHome = loc.pathname.toLowerCase().startsWith("/home");
+    const adminLinks = [
+        { label: "Page de la clinique", path: "/Home", icon: null },
+        { label: "Tableau de bord", path: "/admin", icon: null},
+    ];
+
+    const isClinicHome = loc.pathname.toLowerCase().includes("home");
 
     const go = (hash) => {
         setOpen(false);
         // Si on est déjà sur la page clinic, scroll vers l'ancre
         if (isClinicHome) {
             const id = hash === "top" ? "" : hash;
+            setActiveHash(id);
             if (!id) {
                 // scroll top
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -106,7 +114,7 @@ export default function ClinicNavbar() {
         return () => observer.disconnect();
     }, [loc.pathname]);
 
-    if(!clinic) return null;
+    if(!clinic || loading) return null;
 
     return (
         <header className={`sticky top-0 z-40 ${tokens.header}`}>
@@ -125,7 +133,8 @@ export default function ClinicNavbar() {
 
                 {/* Desktop nav */}
                 <nav className="hidden items-center gap-1 sm:flex">
-                    {items.map((it) => (
+
+                    { !user && items.map((it) => (
                         <button
                             key={it.hash}
                             onClick={() => go(it.hash)}
@@ -135,6 +144,23 @@ export default function ClinicNavbar() {
                         </button>
                     ))}
 
+                    { user && user.role === "ADMIN" && adminLinks.map((it) => (
+                        <Link key={it.path} to={it.path} className={tokens.link}>
+                            <span className="inline-flex items-center gap-1">{it.icon}{it.label}</span>
+                        </Link>
+                    ))}
+
+                    {user ? (
+                        <button
+                            onClick={() => {
+                                logout();
+                            }}
+                            className={`${tokens.cta} ml-2 inline-flex items-center gap-2`}
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Déconnexion
+                        </button>
+                    ) : <>
                     <Link to="/SignUp" className="ml-3 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-slate-700 hover:bg-sky-50">
                         <UserPlus className="w-4 h-4" />
                         Créer un compte
@@ -144,6 +170,9 @@ export default function ClinicNavbar() {
                         <User className="w-4 h-4" />
                         Connexion
                     </Link>
+                    </>
+                    }
+ 
                 </nav>
 
                 {/* Burger mobile */}
@@ -166,17 +195,30 @@ export default function ClinicNavbar() {
                         </button>
                     ))}
 
-                    <div className="p-2">
-                        <Link to="/Login" className="block w-full text-center rounded-xl px-4 py-2 text-slate-700 hover:bg-sky-50" onClick={() => setOpen(false)}>
-                            <span className="inline-flex items-center gap-2 justify-center"><LogIn className="w-4 h-4"/> Connexion</span>
-                        </Link>
-                    </div>
+                    { user ? (
+                        <div className="p-2">
+                            <button onClick={() => { logout(); 
+                                setOpen(false);
+                            }} className="block w-full text-center rounded-xl px-4 py-2 text-white bg-orange-500 hover:bg-orange-600 transition shadow-sm">
+                                <span className="inline-flex items-center gap-2 justify-center"><LogOut className="w-4 h-4"/> Déconnexion</span>
+                            </button>
+                        </div>
+                    ) :  <>
+                        <div className="p-2">
+                            <Link to="/Login" className="block w-full text-center rounded-xl px-4 py-2 text-slate-700 hover:bg-sky-50" onClick={() => setOpen(false)}>
+                                <span className="inline-flex items-center gap-2 justify-center"><LogIn className="w-4 h-4"/> Connexion</span>
+                            </Link>
+                        </div>
 
-                    <div className="p-2">
-                        <Link to="/SignUp" className="block w-full text-center rounded-xl px-4 py-2 text-white bg-orange-500 hover:bg-orange-600 transition shadow-sm" onClick={() => setOpen(false)}>
-                            <span className="inline-flex items-center gap-2 justify-center"><User className="w-4 h-4"/> Créer un compte</span>
-                        </Link>
-                    </div>
+                        <div className="p-2">
+                            <Link to="/SignUp" className="block w-full text-center rounded-xl px-4 py-2 text-white bg-orange-500 hover:bg-orange-600 transition shadow-sm" onClick={() => setOpen(false)}>
+                                <span className="inline-flex items-center gap-2 justify-center"><User className="w-4 h-4"/> Créer un compte</span>
+                            </Link>
+                        </div>
+                        </>
+                  }
+
+            
                 </div>
             </div>
         </header>

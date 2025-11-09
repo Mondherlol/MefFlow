@@ -97,7 +97,8 @@ const ManageAdmins = () => {
     if (!window.confirm(`Supprimer l'administrateur ${admin.user.full_name || admin.user.email} ?`)) return;
     api
       .delete(`/api/admin-clinics/${admin.id}/`)
-      .then(() => {
+      .then((res) => {
+        console.log(res.data);
         toast.success("Administrateur supprimé");
         setAdmins((prev) => prev.filter((a) => a.id !== admin.id));
       })
@@ -109,13 +110,19 @@ const ManageAdmins = () => {
 
   const submitCreate = (form) => {
     setCreating(true);
-    // assumed endpoint for creation
+    // Creer admin
+
+    // Ajouter id clinic
+    form.clinic_id = id;
     api
-      .post(`/api/clinics/${id}/admins/`, form)
+      .post(`/api/admin-clinics/`, form)
       .then((res) => {
         const created = res.data && res.data.data ? res.data.data : res.data;
+        console.log(res.data);
         toast.success("Administrateur créé");
         setShowCreate(false);
+        let newAdmin = created;
+        created.id = created.admin.id; // a modifier dans lapi plus tard
         setAdmins((prev) => [created, ...prev]);
       })
       .catch((err) => {
@@ -176,7 +183,6 @@ const ManageAdmins = () => {
                           <Edit2 className="h-4 w-4" />
                           <span className="text-sm">Modifier</span>
                         </button>
-
                         <button onClick={() => deleteAdmin(a)} className="inline-flex items-center gap-2 px-3 py-1 rounded bg-rose-500 text-white hover:bg-rose-600">
                           <Trash2 className="h-4 w-4" />
                           <span className="text-sm">Supprimer</span>
@@ -254,7 +260,7 @@ const ManageAdmins = () => {
 };
 
 const CreateModal = ({ onClose, onCreate, loading }) => {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '' });
 
   const submit = (e) => {
     e.preventDefault();
@@ -276,7 +282,7 @@ const CreateModal = ({ onClose, onCreate, loading }) => {
         <div className="mt-4 space-y-3">
           <div>
             <label className="text-sm text-slate-600">Nom</label>
-            <input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} className="mt-1 block w-full border border-gray-200 rounded px-3 py-2" />
+            <input value={form.full_name} onChange={(e) => setForm((s) => ({ ...s, full_name: e.target.value }))} className="mt-1 block w-full border border-gray-200 rounded px-3 py-2" />
           </div>
 
           <div>

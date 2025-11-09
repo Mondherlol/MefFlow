@@ -1,4 +1,4 @@
-import { CheckCircle, Mail, ChevronDown, ChevronUp, XCircle } from "lucide-react";
+import { CheckCircle, Mail, ChevronDown, ChevronUp, XCircle, Check, X } from "lucide-react";
 import Section from "./Section";
 import Badge from "./Badge";
 import api from "../../../api/axios";
@@ -47,26 +47,26 @@ const ClinicRequestsList = () => {
 
   const handleAccept = async (requestId) => {
     if (!requestId) return;
-    navigate(`/__superadmin/clinic-request/${requestId}`);
-    // setActionLoading({ id: requestId, type: 'accept' });
-    // try {
-    //   const response = await api.post(`/api/clinic-requests/${requestId}/approve/`);
-    //   if (response.status === 200) {
-    //     toast.success("Demande acceptée avec succès.");
-    //     // Rafraîchir la liste
-    //     await fetchRequests();
-    //     // Notify clinics list to refresh (a clinic may have been created)
-    //     try { window.dispatchEvent(new CustomEvent('clinics:refresh')); } catch (e) { /* noop */ }
-    //   }
-    // } catch (error) {
-    //   if (error.response) {
-    //     toast.error(error.response.data.message || "Erreur de connexion");
-    //   } else {
-    //     toast.error("Erreur de connexion, veuillez réessayer.");
-    //   }
-    // } finally {
-    //   setActionLoading({ id: null, type: null });
-    // }
+    // navigate(`/__superadmin/clinic-request/${requestId}`);
+    setActionLoading({ id: requestId, type: 'accept' });
+    try {
+      const response = await api.post(`/api/clinic-requests/${requestId}/approve/`);
+      if (response.status === 200) {
+        toast.success("Demande acceptée avec succès.");
+        // Rafraîchir la liste
+        await fetchRequests();
+        // Notify clinics list to refresh (a clinic may have been created)
+        try { window.dispatchEvent(new CustomEvent('clinics:refresh')); } catch (e) { /* noop */ }
+      }
+    } catch (error) {
+      if (error.response) {
+        toast.error(error.response.data.message || "Erreur de connexion");
+      } else {
+        toast.error("Erreur de connexion, veuillez réessayer.");
+      }
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
   };
 
   const handleDecline = async (requestId) => {
@@ -152,8 +152,9 @@ const ClinicRequestsList = () => {
               <p className="text-sm">Toutes les demandes ont été traitées</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100">
-              {pendingRequests.map((request) => (
+            <div className="max-h-80 overflow-y-auto">
+              <ul className="divide-y divide-gray-100">
+                {pendingRequests.map((request) => (
                 <li
                   key={request.id}
                   role="button"
@@ -181,7 +182,7 @@ const ClinicRequestsList = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAccept(request.id); }}
                       disabled={!!actionLoading.id}
-                      className="bg-sky-500 hover:bg-sky-600 disabled:opacity-60 text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center gap-2"
+                      className="bg-sky-500 cursor-pointer hover:bg-sky-600 disabled:opacity-60 text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center gap-2"
                     >
                       {actionLoading.id === request.id && actionLoading.type === 'accept' ? (
                         <span className="inline-flex items-center gap-2">
@@ -193,7 +194,7 @@ const ClinicRequestsList = () => {
                         </span>
                       ) : (
                         <>
-                          <CheckCircle className="h-4 w-4" />
+                          <Check className="h-4 w-4" />
                           Valider
                         </>
                       )}
@@ -202,7 +203,7 @@ const ClinicRequestsList = () => {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDecline(request.id); }}
                       disabled={!!actionLoading.id}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors duration-200 text-sm font-medium"
+                      className="inline-flex cursor-pointer items-center gap-2 px-3 py-2 rounded-lg border border-red-100 bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-60 transition-colors duration-200 text-sm font-medium"
                     >
                       {actionLoading.id === request.id && actionLoading.type === 'decline' ? (
                         <span className="inline-flex items-center gap-2">
@@ -214,7 +215,7 @@ const ClinicRequestsList = () => {
                         </span>
                       ) : (
                         <>
-                          <XCircle className="h-4 w-4" />
+                          <X className="h-4 w-4" />
                           Refuser
                         </>
                       )}
@@ -222,7 +223,7 @@ const ClinicRequestsList = () => {
 
                     <button
                       onClick={(e) => { e.stopPropagation(); navigate(`/__superadmin/clinic-request/${request.id}`); }}
-                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
+                      className="bg-orange-500 cursor-pointer hover:bg-orange-600 text-white px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
                     >
                       Détails
                     </button>
@@ -230,6 +231,7 @@ const ClinicRequestsList = () => {
                 </li>
               ))}
             </ul>
+            </div>
           )}
         </div>
 

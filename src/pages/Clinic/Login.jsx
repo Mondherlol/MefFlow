@@ -4,6 +4,7 @@ import { Mail, Lock, Eye, EyeOff, LogIn, ArrowRight, ShieldCheck, CalendarCheck,
 import { useClinic } from "../../context/clinicContext";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import { useAuth } from "../../context/authContext";
 
 const withAlpha = (hex, a = 1) => {
   if (!hex || hex[0] !== "#") return `rgba(0,0,0,${a})`;
@@ -29,8 +30,10 @@ const Card = ({ className = "", children }) => (
   </div>
 );
 
-export default function Login() {
+  export default function Login() {
   const { clinic } = useClinic();
+  const {user, login, loading : authLoading} = useAuth();
+
   const theme = useMemo(() => ({
     primary: clinic?.primaryColor || "#3b82f6",
     secondary: clinic?.secondaryColor || "#1e40af",
@@ -45,6 +48,14 @@ export default function Login() {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      // Si deja co aller a la page admin
+      navigate("/admin", { replace: true });
+    }
+  }, [user, navigate]);
+
 
 
   useEffect(() => {
@@ -80,6 +91,7 @@ export default function Login() {
         if (response.status === 200) {
             // Connexion réussie, redirection
             toast.success("Connexion réussie !");
+            console.log("Login response:", response.data);
 
             if( remember ) {
               // Stocker dans le localStorage
@@ -89,7 +101,10 @@ export default function Login() {
               localStorage.removeItem("email");
               localStorage.removeItem("password");
             }
-            navigate("/patient", { replace: true });
+
+            login(response.data.user, response.data.access, response.data.refresh);
+
+            navigate("/admin", { replace: true });
         }
     } catch (err) {
       if(err.response && err.response.data && err.response.data.detail) {
@@ -101,6 +116,14 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  if( authLoading || user ) {
+    return (
+      <div className="min-h-screen flex items-center justify-center"> 
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-sky-500 border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[70dvh] relative flex items-center justify-center px-6 py-12" >

@@ -10,6 +10,8 @@ import {
   MoreHorizontal,
   ChevronUp,
   ChevronDown,
+  Play,
+  PlayCircleIcon,
 } from "lucide-react";
 import Section from "./Section";
 import Button from "./Button";
@@ -25,10 +27,13 @@ export default function ClinicsList({ tokens }) {
   const [search, setSearch] = useState(""); // bound to input
   const [status, setStatus] = useState("all");
   const [clinics, setClinics] = useState([]);
-  const [meta, setMeta] = useState({ total: 0, page: 1, perPage: 10, totalPages: 1 });
+  // show ~5 items in the visible list by default; the list itself will be scrollable
+  const [meta, setMeta] = useState({ total: 0, page: 1, perPage: 5, totalPages: 1 });
   const [page, setPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const [perPage, setPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
+  // per-row loading state to avoid reloading entire list when toggling a single clinic
+  const [loadingRows, setLoadingRows] = useState({});
   // UI state for per-row menu/modal/delete
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [slugModal, setSlugModal] = useState({ open: false, clinic: null, value: "" });
@@ -151,18 +156,43 @@ export default function ClinicsList({ tokens }) {
 
   // Action: change clinic status
   const handleChangeStatus = async (clinicId, newStatus) => {
-    setIsLoading(true);
+    // set loading for only this row
+    setLoadingRows((prev) => ({ ...prev, [clinicId]: true }));
     try {
       const resp = await api.post(`/api/clinics/${clinicId}/set_status/`, { status: newStatus });
-      if (resp.status === 200) {
+
+      // Update only the affected clinic in local state. Prefer server response if it returns updated clinic.
+      setClinics((prev) =>
+        prev.map((c) => {
+          if (c.id !== clinicId) return c;
+          // If server returned the updated clinic object, merge it. Otherwise apply the new status.
+          const updated = resp && resp.data ? resp.data : null;
+          if (updated && typeof updated === 'object') {
+            // try to map common shapes: { id, name, status, ... } or { data: { ... } }
+            const candidate = updated.data && updated.data.id ? updated.data : updated;
+            return { ...c, ...candidate };
+          }
+          return { ...c, status: newStatus };
+        })
+      );
+
+      if (resp && resp.status === 200) {
         let etat = newStatus === "ACTIVE" ? "réactivée" : "mise en pause";
         toast.success(`Clinique ${etat} avec succès`);
-        await reloadClinicsImmediate();
-      } 
+      } else {
+        // generic success message if non-200 but no error thrown
+        let etat = newStatus === "ACTIVE" ? "réactivée" : "mise en pause";
+        toast.success(`Clinique ${etat}`);
+      }
     } catch (err) {
       toast.error('Erreur lors de la mise à jour du statut de la clinique');
     } finally {
-      setIsLoading(false);
+      // clear the row loading flag
+      setLoadingRows((prev) => {
+        const copy = { ...prev };
+        delete copy[clinicId];
+        return copy;
+      });
     }
   };
 
@@ -253,8 +283,9 @@ export default function ClinicsList({ tokens }) {
               <p className="text-sm">Aucune clinique trouvée pour ces critères</p>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-200">
-              {displayed.map((c) => (
+            <div className="max-h-80 overflow-y-auto">
+              <ul className="divide-y divide-slate-200">
+                {displayed.map((c) => (
                 <li
                   key={c.id}
                   role="button"
@@ -303,13 +334,30 @@ export default function ClinicsList({ tokens }) {
                 <Button variant="subtle" className="px-3 py-1.5">
                   <Settings className="h-4 w-4" /> Gérer
                 </Button>
-                {c.status === "ACTIVE" ? (
+                {loadingRows[c.id] ? (
+                  <button
+                    onClick={(e) => e.stopPropagation()}
+                    disabled
+                    className="px-3 py-1.5 bg-white border border-gray-300 text-slate-700 rounded-lg flex items-center gap-2"
+                  >
+                    <svg
+                      className="animate-spin h-4 w-4 text-blue-600"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  </button>
+                ) : c.status === "ACTIVE" ? (
                   <Button variant="outline" className="px-3 py-1.5" title="Mettre en pause" onClick={(e) => { e.stopPropagation(); handleChangeStatus(c.id, "PAUSED"); }}>
                     <PauseCircle className="h-4 w-4" /> Mettre en pause
                   </Button>
                 ) : (
                   <Button variant="primary" className="px-3 py-1.5" title="Réactiver" onClick={(e) => { e.stopPropagation(); handleChangeStatus(c.id, "ACTIVE"); }}>
-                    <PlayCircle className="h-4 w-4" /> Réactiver
+                    <PlayCircleIcon className="h-4 w-4" /> Réactiver
                   </Button>
                 )}
                 {/* More / context menu */}
@@ -365,6 +413,7 @@ export default function ClinicsList({ tokens }) {
             </li>
           ))}
             </ul>
+            </div>
           )}
         </div>
       </div>
@@ -378,7 +427,7 @@ export default function ClinicsList({ tokens }) {
               className={`px-3 py-1.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 transition-all duration-200 ${tokens.focus}`}
               value={perPage}
               onChange={(e) => {
-                const value = parseInt(e.target.value, 10) || 10;
+                const value = parseInt(e.target.value, 10) || 5;
                 setPerPage(value);
                 setPage(1);
               }}

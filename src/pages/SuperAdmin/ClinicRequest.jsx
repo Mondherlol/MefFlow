@@ -124,7 +124,7 @@ const ClinicRequest = () => {
     if (modalType === 'request') {
       if (modalData.id) navigate(`/__superadmin/clinic-request/${modalData.id}`);
     } else if (modalType === 'clinic') {
-      if (modalData.id) navigate(`/super-admin/clinics/${modalData.id}`);
+      if (modalData.id) navigate(`/__superadmin/clinic-infos/${modalData.id}`);
     }
     closeModal();
   };
