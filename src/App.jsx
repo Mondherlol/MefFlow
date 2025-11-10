@@ -25,7 +25,7 @@ import Tarifs from "./pages/Admin/Tarifs";
 import StripeBilling from "./pages/Admin/StripeBilling";
 import Factures from "./pages/Admin/Factures";
 import CustomHome from "./pages/Admin/Clinic/CustomHome";
-
+import Horaires from "./pages/Admin/Clinic/Horaires";
 // Other pages
 import Landing from "./pages/Landing";
 import StartClinic from "./pages/StartClinic";
@@ -42,6 +42,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ClinicRoute from "./components/ClinicRoute";
 import { Toaster } from "react-hot-toast";
 import { useClinic } from "./context/clinicContext";
+import EditClinic from "./pages/Admin/Clinic/EditClinic";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
@@ -170,6 +171,22 @@ export default function App() {
                   </ProtectedRoute>
                 </ClinicRoute>
                } />
+
+              <Route path="/admin/clinique/horaires" element={ 
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <Horaires />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+
+              <Route path="/admin/clinique/edit" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <EditClinic />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
 
               <Route path="/admin/services" element={
                 <ClinicRoute>

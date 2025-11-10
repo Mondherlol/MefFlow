@@ -147,7 +147,7 @@ export default function SectionsList({
           type="button"
           onClick={() =>
             applyPresetVisible(["services", "contact"]) // Minimal
-          }
+          } 
           className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
         >
           Minimal

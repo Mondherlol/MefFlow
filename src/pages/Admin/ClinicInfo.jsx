@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import AdminTemplate from "../../components/Admin/AdminTemplate";
 import { useClinic } from "../../context/clinicContext";
 import {
-  Building2, Palette, Home, Clock, Image as ImageIcon, ArrowRight, ShieldAlert
+  Building2, Palette, Home, Clock, Image as ImageIcon, ArrowRight, ShieldAlert,
+  Edit,
+  Pencil,
+  Settings,
+  Hospital,
+  Settings2
 } from "lucide-react";
 import ActionTile from "../../components/Admin/ManageClinic/ActionTile";
 import ThemeCard from "../../components/Admin/ManageClinic/ThemeCard";
@@ -34,10 +39,10 @@ export default function ManageClinic() {
       <Section title="Actions rapides">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <ActionTile
-            tone="indigo"
-            icon={Building2}
+            tone="orange"
+            icon={Settings2}
             title="Modifier les infos"
-            desc="Coordonnées, adresse, emails, RGPD…"
+            desc="Coordonnées, adresse, emails, nom..."
             onClick={() => navigate("/admin/clinique/edit")} // EditClinic
           />
           <ActionTile
@@ -45,7 +50,7 @@ export default function ManageClinic() {
             icon={Clock}
             title="Horaires"
             desc="Définir les horaires d’ouverture & urgences"
-            onClick={() => navigate("/admin/clinique/hours")}
+            onClick={() => navigate("/admin/clinique/horaires")}
           />
           <ActionTile
             tone="emerald"
