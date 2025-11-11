@@ -6,17 +6,20 @@ import {
 } from "lucide-react";
 
 import { withAlpha } from "../../utils/colors";
+import { getImageUrl } from "../../utils/image";
 
-
-// Use extracted smaller components for clarity + reuse
 import InfoPill from "../../components/Clinic/ClinicLanding/InfoPill";
 import ServicesSection from "../../components/Clinic/ClinicLanding/ServicesSection";
 import AboutSection from "../../components/Clinic/ClinicLanding/AboutSection";
 import ContactSection from "../../components/Clinic/ClinicLanding/ContactSection";
 import LoginCard from "../../components/Clinic/ClinicLanding/LoginCard";
+import TarifsSection from "../../components/Clinic/ClinicLanding/TarifsSection";
+import MedecinsSection from "../../components/Clinic/ClinicLanding/MedecinsSection";
+import GallerySection from "../../components/Clinic/ClinicLanding/GallerySection";
 import { useClinic } from "../../context/clinicContext";
 import Hero from "../../components/Clinic/ClinicLanding/Hero";
 import { useEffect, useState } from "react";
+import FAQSection from "../../components/Clinic/ClinicLanding/FAQSection";
 
 
 export default function Home() {
@@ -50,36 +53,87 @@ export default function Home() {
              style={{ background: `radial-gradient(ellipse at center, ${withAlpha(theme.accent,.22)}, transparent 60%)` }} />
       </div>
 
-      {/* ===================== HERO ===================== */}
-      <motion.section
-        className="relative pt-20 pb-24 md:pb-28"
-        initial={{ opacity: 0, y: 18 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-      >
-        <Hero clinic={clinic} theme={theme} />
-      </motion.section>
+      {/* Render sections in the order defined by clinic.sections (respect visibility) */}
+      {(Array.isArray(clinic.sections) ? clinic.sections : []).map((sec) => {
+        if (!sec?.visible) return null;
+        // Keep the hero as a section with slightly different spacing
+        if (sec.id === "hero") {
+          return (
+            <motion.section
+              key={sec.id}
+              className="relative pt-20 pb-24 md:pb-28"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <Hero clinic={clinic} theme={theme} />
+            </motion.section>
+          );
+        }
 
-      {/* ===================== LOGIN / PATIENT ===================== */}
-      <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.6 }}>
-        <LoginCard theme={theme} />
-      </motion.div>
+        // For all other sections use a consistent motion wrapper
+        const wrapperProps = {
+          key: sec.id,
+          initial: { opacity: 0, y: 14 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, amount: 0.15 },
+          transition: { duration: 0.6 },
+        };
 
-      {/* ===================== ABOUT ===================== */}
-      <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.6 }}>
-        <AboutSection clinic={clinic} />
-      </motion.div>
-
-      {/* ===================== SERVICES ===================== */}
-      <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.6 }}>
-        <ServicesSection clinic={clinic} theme={theme} />
-      </motion.div>
-
-      {/* ===================== CONTACT ===================== */}
-      <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.15 }} transition={{ duration: 0.6 }}>
-        <ContactSection clinic={clinic} theme={theme} withAlpha={withAlpha} />
-      </motion.div>
+        switch (sec.id) {
+          case "invite":
+            return (
+              <motion.div {...wrapperProps}>
+                <LoginCard theme={theme} />
+              </motion.div>
+            );
+          case "about":
+            return (
+              <motion.div {...wrapperProps}>
+                <AboutSection clinic={clinic} />
+              </motion.div>
+            );
+          case "faq":
+            return (
+              <motion.div {...wrapperProps}>
+                <FAQSection clinic={clinic} theme={theme} />
+              </motion.div>
+            );
+          case "services":
+            return (
+              <motion.div {...wrapperProps}>
+                <ServicesSection clinic={clinic} theme={theme} />
+              </motion.div>
+            );
+          case "contact":
+            return (
+              <motion.div {...wrapperProps}>
+                <ContactSection clinic={clinic} theme={theme} withAlpha={withAlpha} />
+              </motion.div>
+            );
+          case "tarifs":
+            return (
+              <motion.div {...wrapperProps}>
+                <TarifsSection clinic={clinic} theme={theme} />
+              </motion.div>
+            );
+          case "medecins":
+            return (
+              <motion.div {...wrapperProps}>
+                <MedecinsSection clinic={clinic} theme={theme} />
+              </motion.div>
+            );
+          case "gallery":
+            return (
+              <motion.div {...wrapperProps}>
+                <GallerySection clinic={clinic} theme={theme} />
+              </motion.div>
+            );
+          default:
+            return null;
+        }
+      })}
 
       {/* ===================== FOOTER ===================== */}
       <motion.footer className="pt-10 pb-8 text-white mt-4" style={{ background: `linear-gradient(135deg, ${withAlpha(theme.primary,.96)}, ${withAlpha(theme.secondary,.96)})` }} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.12 }} transition={{ duration: 0.6 }}>

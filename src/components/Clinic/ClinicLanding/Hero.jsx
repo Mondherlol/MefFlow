@@ -5,13 +5,14 @@ import InfoPill from "./InfoPill";
 import CTAButton from "./CTAButton";
 
 import { motion } from "motion/react";
+import { getImageUrl } from "../../../utils/image";
 
 
 function Hero({ clinic, theme }) {
     return ( <>
           <div className="absolute inset-0 overflow-hidden rounded-b-[3rem]">
-          {clinic.heroImage ? (
-            <ClinicImage src={clinic.heroImage} alt="Image principale de la clinique" className="w-full h-full" rounded="rounded-b-[3rem]" />
+          {clinic.hero_image_url ? (
+            <ClinicImage src={getImageUrl(clinic.hero_image_url)} alt="Image principale de la clinique" className="w-full h-full" rounded="rounded-b-[3rem]" />
           ) : (
             <div className="w-full h-full rounded-b-[3rem]"
                  style={{ background: `linear-gradient(135deg, ${withAlpha(theme.primary,.9)} 0%, ${withAlpha(theme.secondary,.9)} 100%)` }} />
@@ -31,7 +32,7 @@ function Hero({ clinic, theme }) {
             </motion.h1>
 
             <motion.p className="text-lg md:text-xl text-white/90 mb-8" initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7, delay: 0.05 }}>
-              {clinic.description || "Des soins médicaux de qualité dans un environnement chaleureux et professionnel."}
+              {clinic.subtitle || "Des soins médicaux de qualité dans un environnement chaleureux et professionnel."}
             </motion.p>
 
             <motion.div className="flex flex-col sm:flex-row gap-4 justify-center" initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.7, delay: 0.08 }}>

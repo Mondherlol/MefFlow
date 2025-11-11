@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import SectionRow from "./SectionRow";
-import { Save } from "lucide-react";
+import { Save, Loader } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -15,10 +15,12 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useClinic } from "../../../../context/clinicContext";
+import api from "../../../../api/axios";
+import toast from "react-hot-toast";
 
-/**
- * Utils
- */
+
+// Pour que le hero reste premier
 function ensureHeroFirst(list) {
   const copy = [...list];
   const heroIdx = copy.findIndex((s) => s.id === "hero");
@@ -29,14 +31,10 @@ function ensureHeroFirst(list) {
   return copy;
 }
 
-export default function SectionsList({
-  sections,
-  setSections,
-  colors,
-  compact = false,
-  onSave,
-  /** Optionnel: la liste canonique pour corriger les préréglages */
-  catalog = [
+
+  
+  // Liste par defaut des sections
+ const default_sections = [
     { id: "hero", label: "Hero", locked: true, visible: true },
     { id: "invite", label: "Carte connexion", visible: true },
     { id: "about", label: "À propos", visible: true },
@@ -46,33 +44,39 @@ export default function SectionsList({
     { id: "medecins", label: "Nos médecins", visible: true },
     { id: "faq", label: "FAQ", visible: true },
     { id: "gallery", label: "Galerie d’images", visible: true },
-  ],
+  ];
+
+export default function SectionsList({
+  colors,
+  compact = true,
+
 }) {
   const [dragId, setDragId] = useState(null);
+  const { clinic, setClinic } = useClinic();
+  const [sections, setSections] = useState([]); 
+  const [loading, setLoading] = useState(false);
 
-  // dnd-kit sensors (meilleure prise en main sur mobile/souris)
+ 
+  useEffect(() => {
+    if (clinic?.sections && clinic.sections.length) {
+      setSections(clinic.sections);
+    } else {
+      setSections(
+        ensureHeroFirst(default_sections.map((c) => ({ ...c, visible: c.id === "hero" ? true : !!c.visible })))
+      );
+    }
+  }, [clinic]);
+
+  // Pour dnd-kit
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  const ids = useMemo(() => sections.map((s) => s.id), [sections]);
+  // use the controlled props when provided, otherwise use local state
+  const currentSections = sections;
+  const currentSetSections = setSections;
 
-  /** Appelle ceci pour appliquer un préréglage “visibilité” tout en gardant l’ordre canonique,
-   *  et en ré-affichant bien les items retirés auparavant. */
-  const applyPresetVisible = (visibleIds = []) => {
-    // 1) Repartir de l’ordre canonique (catalog)
-    const ordered = catalog.map((c) => {
-      const current = sections.find((s) => s.id === c.id);
-      // garder les labels existants si personnalisés
-      return {
-        ...c,
-        ...(current || {}),
-        visible: c.id === "hero" ? true : visibleIds.includes(c.id),
-        locked: c.id === "hero" ? true : !!current?.locked,
-      };
-    });
-    setSections(ensureHeroFirst(ordered));
-  };
+  const ids = useMemo(() => (currentSections || []).map((s) => s.id), [currentSections]);
 
   const onDragStart = (e) => setDragId(e.active.id);
 
@@ -81,18 +85,63 @@ export default function SectionsList({
     const { active, over } = e;
     if (!over || active.id === over.id) return;
 
-    const startIndex = sections.findIndex((s) => s.id === active.id);
-    const endIndex = sections.findIndex((s) => s.id === over.id);
+    const startIndex = (currentSections || []).findIndex((s) => s.id === active.id);
+    const endIndex = (currentSections || []).findIndex((s) => s.id === over.id);
     if (startIndex === -1 || endIndex === -1) return;
 
     // Empêcher déplacer le hero
-    if (sections[startIndex]?.id === "hero") return;
+    if ((currentSections || [])[startIndex]?.id === "hero") return;
 
-    const moved = arrayMove(sections, startIndex, endIndex);
-    setSections(ensureHeroFirst(moved));
+    const moved = arrayMove(currentSections, startIndex, endIndex);
+    currentSetSections(ensureHeroFirst(moved));
   };
 
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const payload = { sections: currentSections };
+      const response = await api.patch(`/api/clinics/${clinic.id}/`, payload);
+      if (response.status === 200 && response.data) {
+        setClinic(response.data);
+        toast.success("Ordre des sections sauvegardé");
+      } else {
+        toast.error("Erreur lors de la sauvegarde");
+      }
+    } catch (error) {
+      console.error("Erreur sauvegarde sections:", error);
+      toast.error("Erreur lors de la sauvegarde");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => () => {
+    setSections(
+      ensureHeroFirst(default_sections.map((c) => ({ ...c, visible: c.id === "hero" ? true : !!c.visible })))
+    ).then(() => {
+          // Then save
+    handleSave();
+    });
+
+ 
+
+   
+  }
+
   return (
+    <>
+         <div className="flex items-center justify-between mb-3">
+          <p className="text-sm text-slate-500">Activez/masquez et ré-ordonnez. Le Hero reste toujours en premier.</p>
+          <button
+            type="button"
+            onClick={handleReset()}
+            className="inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200"
+            disabled={loading}
+          >
+            Réinitialiser
+          </button>
+        </div>
+
     <div>
       <DndContext
         sensors={sensors}
@@ -103,7 +152,7 @@ export default function SectionsList({
       >
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
           <ul className={compact ? "space-y-1.5" : "space-y-2"}>
-            {sections.map((sec, idx) => (
+            {(currentSections || []).map((sec, idx) => (
               <SortableRow
                 key={sec.id}
                 id={sec.id}
@@ -113,27 +162,27 @@ export default function SectionsList({
                 compact={compact}
                 dragging={dragId === sec.id}
                 onToggle={() =>
-                  setSections((s) =>
-                    s.map((it, i) =>
-                      i === idx ? { ...it, visible: it.locked ? true : !it.visible } : it
+                    currentSetSections((s) =>
+                      s.map((it, i) =>
+                        i === idx ? { ...it, visible: it.locked ? true : !it.visible } : it
+                      )
                     )
-                  )
                 }
                 onUp={() => {
                   if (idx <= 1) return;
-                  setSections((s) => {
-                    const a = [...s];
-                    [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]];
-                    return ensureHeroFirst(a);
-                  });
+                    currentSetSections((s) => {
+                      const a = [...s];
+                      [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]];
+                      return ensureHeroFirst(a);
+                    });
                 }}
                 onDown={() => {
-                  if (idx <= 0 || idx >= sections.length - 1 || sections[idx].id === "hero") return;
-                  setSections((s) => {
-                    const a = [...s];
-                    [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]];
-                    return ensureHeroFirst(a);
-                  });
+                  if (idx <= 0 || idx >= (currentSections || []).length - 1 || (currentSections || [])[idx].id === "hero") return;
+                    currentSetSections((s) => {
+                      const a = [...s];
+                      [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]];
+                      return ensureHeroFirst(a);
+                    });
                 }}
               />
             ))}
@@ -142,36 +191,26 @@ export default function SectionsList({
       </DndContext>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 justify-end">
-        {/* Exemples d’utilisation du correctif préréglages */}
         <button
           type="button"
-          onClick={() =>
-            applyPresetVisible(["services", "contact"]) // Minimal
-          } 
-          className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
-        >
-          Minimal
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            applyPresetVisible(catalog.map((c) => c.id).filter((id) => id !== "hero")) // Tout afficher (hors hero déjà visible)
-          }
-          className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:bg-slate-50"
-        >
-          Tout afficher
-        </button>
-
-        <button
-          type="button"
-          onClick={onSave}
+          onClick={handleSave}
           className="cursor-pointer inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow"
           style={{ backgroundColor: colors?.primary || "#3b82f6" }}
+          disabled={loading}
         >
-          <Save className="w-4 h-4" /> Enregistrer l’ordre
+          {!loading ? (
+            <>
+              <Save className="w-4 h-4" /> Enregistrer l’ordre
+            </>
+          ) : (
+            <>
+              <Loader className="w-4 h-4 animate-spin" /> Sauvegarde...
+            </>
+          )}
         </button>
       </div>
     </div>
+    </>
   );
 }
 

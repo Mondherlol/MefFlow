@@ -9,8 +9,6 @@ import { useAuth } from '../../context/authContext';
 import { useNavigate } from 'react-router-dom';
 
 const tokens = {
-  // Couleurs: orange (primary) + sky (secondary) par défaut,
-  // mais on prend celles de la clinique si dispo.
   brand: (clinic) => ({
     primary: clinic?.theme?.primary || 'orange',
     secondary: clinic?.theme?.secondary || 'sky',

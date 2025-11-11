@@ -3,6 +3,7 @@ import { Users, Star, Clock, MapPin, UploadCloud, Save, Loader } from "lucide-re
 import { useClinic } from "../../../../context/clinicContext";
 import api from "../../../../api/axios";
 import toast from "react-hot-toast";
+import { getImageUrl } from "../../../../utils/image";
 
 export default function AboutPreview({ colors }) {
   const { clinic, setClinic } = useClinic();
@@ -22,7 +23,7 @@ export default function AboutPreview({ colors }) {
   // Initialize from clinic
   useEffect(() => {
     setText(clinic?.about_text || "");
-    setImage(clinic?.about_image_url || null);
+    setImage(clinic?.about_image_url ? getImageUrl(clinic.about_image_url) : null);
   }, [clinic]);
 
   const onSave = async () => {

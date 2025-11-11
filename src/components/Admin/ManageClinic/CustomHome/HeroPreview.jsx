@@ -22,7 +22,7 @@ export default function HeroPreview({ colors}) {
     const form = new FormData();
     console.log("Image to upload:", image);
     if(image instanceof File) {
-        form.append('logo', image);
+        form.append('hero_image', image);
     }
     form.append('slogan', title);
     form.append('subtitle', subtitle);
@@ -54,9 +54,10 @@ export default function HeroPreview({ colors}) {
   }, [image]);
 
   useEffect(() => {
+    console.log("Clinic updated in HeroPreview:", clinic);
     setTitle(clinic?.slogan || "");
     setSubtitle(clinic?.subtitle || "");
-    setImage(clinic?.hero_image_url || null);
+    setImage(clinic?.hero_image_url? getImageUrl(clinic.hero_image_url) : null);
   }, [clinic]);
 
   return (

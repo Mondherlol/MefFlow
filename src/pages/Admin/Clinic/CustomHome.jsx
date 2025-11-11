@@ -57,36 +57,6 @@ export default function CustomHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // préréglages
-  const presets = [
-    {
-      id: "all",
-      label: "Tout afficher",
-      icon: LayoutGrid,
-      apply: () => setSections((s) => s.map((it) => ({ ...it, visible: true, ...(it.id === "hero" ? { locked: true } : {}) }))),
-    },
-    {
-      id: "minimal",
-      label: "Minimal (Hero + Services + Contact)",
-      icon: Sparkles,
-      apply: () => setSections((_) => [
-        { id: "hero", label: "Hero", visible: true, locked: true },
-        { id: "services", label: "Nos services", visible: true },
-        { id: "contact", label: "Nous contacter", visible: true },
-      ]),
-    },
-    {
-      id: "marketing",
-      label: "Marketing (Hero + À propos + Médecins + FAQ)",
-      icon: Wand2,
-      apply: () => setSections((_) => [
-        { id: "hero", label: "Hero", visible: true, locked: true },
-        { id: "about", label: "À propos", visible: true },
-        { id: "medecins", label: "Nos médecins", visible: true },
-        { id: "faq", label: "FAQ", visible: true },
-      ]),
-    },
-  ];
 
 
 
@@ -105,16 +75,6 @@ export default function CustomHome() {
       <Section title="Hero (aperçu + édition)" collapsible defaultOpen>
         <HeroPreview
           colors={colors}
-          image={heroImage}
-          setImage={setHeroImage}
-          title={heroTitle}
-          setTitle={setHeroTitle}
-          subtitle={heroSubtitle}
-          setSubtitle={setHeroSubtitle}
-          onSave={() => {
-            console.log("SAVE HERO:", { heroImage, heroTitle, heroSubtitle });
-            alert("Hero enregistré (démo).");
-          }}
         />
       </Section>
 
@@ -135,20 +95,9 @@ export default function CustomHome() {
 
       {/* Apparence & ordre (compact) */}
       <Section title="Apparence & ordre des sections" collapsible className="mt-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-sm text-slate-500">Activez/masquez et ré-ordonnez. Le Hero reste toujours en premier.</p>
-          <MiniDropdown label="Préréglages" items={presets} />
-        </div>
-
         <SectionsList
           compact
-          sections={sections}
-          setSections={setSections}
           colors={colors}
-          onSave={() => {
-            console.log("SAVE ORDER:", sections);
-            alert("Ordre/visibilité sauvegardés (démo).");
-          }}
         />
       </Section>
 

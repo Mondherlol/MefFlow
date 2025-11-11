@@ -20,7 +20,9 @@ export default function ServicesSection({ clinic, theme }) {
    const fetchServices = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/api/services/', { params: { clinic_id: clinic.id } });
+      console.log('Fetching services for clinic ID:', clinic.id);
+      const response = await api.get(`/api/clinics/${clinic.id}/services/`);
+      console.log('Services fetched:', response.data);
       if (response?.data?.data) setServices(response.data.data);
     } catch (error) {
       toast.error('Erreur lors du chargement des services.');

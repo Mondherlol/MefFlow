@@ -1,10 +1,10 @@
 import Button from "./Button";
-import { CheckCircle2, LoaderCircle, CircleAlert } from "lucide-react";
+import { CheckCircle2, LoaderCircle, CircleAlert, Hash } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../../../api/axios";
 import { toast } from "react-hot-toast";
 
-export default function SlugModal({ open, clinic, tokens, closeModal,  reloadClinicsImmediate }) {
+export default function SlugModal({ open, clinic, tokens, closeModal,  reloadClinics }) {
     const [checkingSlug, setCheckingSlug] = useState(false);
     const [slugAvailable, setSlugAvailable] = useState(null);
     const [value, onChange] = useState(clinic?.slug || '');
@@ -34,7 +34,7 @@ export default function SlugModal({ open, clinic, tokens, closeModal,  reloadCli
         if (resp.status === 200) {
             toast.success('Slug mis à jour');
             onClose();
-            await reloadClinicsImmediate();
+            await reloadClinics();
         } 
         } catch (err) {
             if(err.response && err.response.data) {
@@ -99,7 +99,9 @@ export default function SlugModal({ open, clinic, tokens, closeModal,  reloadCli
       <div className={`w-full bg-white max-w-lg mx-4 ${tokens.card} rounded-lg shadow-lg border border-slate-200`} onClick={(e) => e.stopPropagation()}>
         <div className="px-6 py-4">
           <h3 className="text-lg font-medium">Modifier le slug</h3>
-          <p className="mt-2 text-sm text-slate-600">Nouveau slug pour <strong className="text-slate-800">{clinic?.name}</strong></p>
+          <p className="mt-2 text-sm text-slate-600">Nouveau slug pour <strong className="text-slate-800">{clinic?.name}</strong>
+           <span className=" text-slate-400"> <Hash className="inline-block ml-1 h-4 w-4 -translate-y-0.5" />{clinic?.slug}</span>
+          </p>
 
           <div className="mt-4">
             <div className="relative flex items-center gap-3">

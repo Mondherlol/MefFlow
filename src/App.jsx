@@ -47,6 +47,7 @@ import ClinicRoute from "./components/ClinicRoute";
 import { Toaster } from "react-hot-toast";
 import { useClinic } from "./context/clinicContext";
 import EditClinic from "./pages/Admin/Clinic/EditClinic";
+import EditMedia from "./pages/Admin/Clinic/EditMedia";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
@@ -188,6 +189,14 @@ export default function App() {
                 <ClinicRoute>
                   <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
                     <EditClinic />
+                  </ProtectedRoute>
+                </ClinicRoute>
+              } />
+
+              <Route path="/admin/clinique/media" element={
+                <ClinicRoute>
+                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
+                    <EditMedia />
                   </ProtectedRoute>
                 </ClinicRoute>
               } />
