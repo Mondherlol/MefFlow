@@ -48,200 +48,84 @@ import { Toaster } from "react-hot-toast";
 import { useClinic } from "./context/clinicContext";
 import EditClinic from "./pages/Admin/Clinic/EditClinic";
 import EditMedia from "./pages/Admin/Clinic/EditMedia";
+import DoctorHoraires from "./pages/Doctor/Horaires";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
   const { user, loading: authLoading } = useAuth();
 
+  const superAdminRoutes = [
+    { path: "/__superadmin/login", component: SuperAdminLogin },
+    { path: "/__superadmin/dashboard", component: Dashboard, protectedRoles: ["SUPER_ADMIN"] },
+    { path: "/__superadmin/clinic-request/:id", component: ClinicRequest, protectedRoles: ["SUPER_ADMIN"] },
+    { path: "/__superadmin/clinic-infos/:id", component: ClinicInfos, protectedRoles: ["SUPER_ADMIN"] },
+    { path: "/__superadmin/manage-admins/:id", component: ManageAdmins, protectedRoles: ["SUPER_ADMIN"] },
+    { path: "/__superadmin/*", element: <Navigate to="/__superadmin/login" replace /> },
+  ];
+
+  const rootRoutes = [
+    { path: "/", component: Landing },
+    { path: "/StartClinic", component: StartClinic },
+  ];
+
+  const clinicPublicRoutes = [
+    { path: "/home", component: Home, clinicRoute: true },
+    { path: "/", element: <Navigate to="/home" replace />, clinicRoute: true },
+    { path: "/contact", component: Contact, clinicRoute: true },
+    { path: "/login", component: Login, clinicRoute: true },
+    { path: "/signup", component: SignUp, clinicRoute: true },
+  ];
+
+  const adminRoutes = [
+    { path: "/admin", component: HomeAdmin, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/receptionnistes", component: Receptionnistes, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/medecins", component: Medecins, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/patients", component: Patients, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/clinique", component: ClinicInfo, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/clinique/custom-home", component: CustomHome, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/clinique/horaires", component: Horaires, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/clinique/edit", component: EditClinic, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/clinique/media", component: EditMedia, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/services", component: Services, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/tarifs", component: Tarifs, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/billing/stripe", component: StripeBilling, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin/factures", component: Factures, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+  ];
+
+  const doctorRoutes = [
+    { path: "/doctor", component: HomeDoctor, clinicRoute: true },
+    { path: "/doctor/horaires", component: DoctorHoraires, clinicRoute: true, protectedRoles: ["DOCTOR"], redirectTo: "/login" },
+  ];
+
+  const clinicRoutes = [...clinicPublicRoutes, ...adminRoutes, ...doctorRoutes];
+
+  const renderRoute = (r) => {
+    if (r.element) return <Route key={r.path} path={r.path} element={r.element} />;
+    const Elem = r.component;
+    let jsx = <Elem />;
+    if (r.protectedRoles) {
+      jsx = (
+        <ProtectedRoute roles={r.protectedRoles} redirectTo={r.redirectTo}>
+          {jsx}
+        </ProtectedRoute>
+      );
+    }
+    if (r.clinicRoute) {
+      jsx = <ClinicRoute>{jsx}</ClinicRoute>;
+    }
+    return <Route key={r.path} path={r.path} element={jsx} />;
+  };
+
   return (
     <>
       <Toaster />
-      { user && !authLoading && user.role === "SUPER_ADMIN" ?
-        <SuperAdminNavbar /> : onRoot ? <Navbar /> : <ClinicNavbar />
-      }
+      {user && !authLoading && user.role === "SUPER_ADMIN" ? <SuperAdminNavbar /> : onRoot ? <Navbar /> : <ClinicNavbar />}
       <Routes>
-
-      <Route path="*" element={<NotFound />} />
-
-      {/* Super Admin routes */}
-        <Route path="/__superadmin/login" element={<SuperAdminLogin />} />
-        <Route
-          path="/__superadmin/dashboard"
-          element={
-            <ProtectedRoute roles={["SUPER_ADMIN"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route path="/__superadmin/clinic-request/:id" 
-          element={
-            <ProtectedRoute roles={["SUPER_ADMIN"]}>
-              <ClinicRequest />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route path="/__superadmin/clinic-infos/:id" 
-          element={
-            <ProtectedRoute roles={["SUPER_ADMIN"]}>
-              <ClinicInfos />
-            </ProtectedRoute>
-          } 
-        />
-
-        <Route path="/__superadmin/manage-admins/:id" element={
-          <ProtectedRoute roles={["SUPER_ADMIN"]}>
-            <ManageAdmins />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/__superadmin/*" element={<Navigate to="/__superadmin/login" replace />} />
-      
-      {onRoot ? (
-        <>
-          <Route path="/" element={<Landing />} />
-          <Route path="/StartClinic" element={<StartClinic />} />
-   
-        </>
-      ) : (
-        // Routes pour les cliniques en sous-domaine 
-              <>
-                <Route path="/home" element={
-                  <ClinicRoute>
-                    <Home/>
-                  </ClinicRoute>
-                } />
-                <Route path="/" element={<Navigate to="/home" replace />} />
-
-                <Route path="/contact" element={
-                  <ClinicRoute>
-                    <Contact />
-                  </ClinicRoute>
-                } />
-
-                <Route path="/login" element={
-                  <ClinicRoute>
-                    <Login />
-                  </ClinicRoute>
-                } />
-
-                <Route path="/signup" element={
-                  <ClinicRoute>
-                    <SignUp />
-                  </ClinicRoute>
-                } />
-
-              <Route path="/admin" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <HomeAdmin />
-                  </ProtectedRoute>
-                </ClinicRoute>
-               } />
-
-              <Route path="/admin/receptionnistes" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Receptionnistes />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/medecins" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Medecins />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/patients" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Patients />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/clinique" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <ClinicInfo />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              
-               <Route path="/admin/clinique/custom-home" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <CustomHome />
-                  </ProtectedRoute>
-                </ClinicRoute>
-               } />
-
-              <Route path="/admin/clinique/horaires" element={ 
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Horaires />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-
-              <Route path="/admin/clinique/edit" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <EditClinic />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-
-              <Route path="/admin/clinique/media" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <EditMedia />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-
-              <Route path="/admin/services" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Services />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/tarifs" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Tarifs />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/billing/stripe" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <StripeBilling />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-              <Route path="/admin/factures" element={
-                <ClinicRoute>
-                  <ProtectedRoute roles={["ADMIN"]} redirectTo="/login">
-                    <Factures />
-                  </ProtectedRoute>
-                </ClinicRoute>
-              } />
-
-              <Route path="/doctor" element={
-                <ClinicRoute>
-                    <HomeDoctor />
-                </ClinicRoute>
-              } />
-
-              </>
-
-      )}
+        <Route path="*" element={<NotFound />} />
+        {superAdminRoutes.map(renderRoute)}
+        {onRoot ? rootRoutes.map(renderRoute) : clinicRoutes.map(renderRoute)}
       </Routes>
-      { onRoot ? <Footer /> : <ClinicFooter /> }
-      
+      {onRoot ? <Footer /> : <ClinicFooter />}
     </>
   );
 }

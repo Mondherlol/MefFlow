@@ -87,10 +87,21 @@ export default function EditMedia() {
   };
 
   const handleRemoveExistingGallery = (url) => {
-    // mark to remove on next save and remove from UI immediately
-    setRemovedGalleryUrls((s) => [...s, url]);
-    setGallery((g) => g.filter((i) => i.url !== url));
-    toast.success("Image marquée pour suppression");
+
+    // Remove with api
+    api.delete(`/api/clinics/${clinic.id}/gallery-image/?path=${encodeURIComponent(url)}`)
+    .then((res) => {
+        // on success, remove from gallery state and add to removedGalleryUrls
+        setGallery((s) => s.filter((it) => it.url !== url));
+        setRemovedGalleryUrls((s) => [...s, url]);
+        toast.success("Image de la galerie supprimée");
+    })
+    .catch((err) => {
+      console.error("Error deleting gallery image:", err);
+      toast.error("Erreur lors de la suppression de l'image");
+    }
+    )
+   
   };
 
   const handleRemoveNewGallery = (preview) => {

@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useClinic } from "../../../../context/clinicContext";
 import api from "../../../../api/axios";
 import toast from "react-hot-toast";
+import { default_sections } from "../../../../utils/clinicDefaults";
 
 
 // Pour que le hero reste premier
@@ -30,21 +31,6 @@ function ensureHeroFirst(list) {
   }
   return copy;
 }
-
-
-  
-  // Liste par defaut des sections
- const default_sections = [
-    { id: "hero", label: "Hero", locked: true, visible: true },
-    { id: "invite", label: "Carte connexion", visible: true },
-    { id: "about", label: "À propos", visible: true },
-    { id: "services", label: "Nos services", visible: true },
-    { id: "contact", label: "Nous contacter", visible: true },
-    { id: "tarifs", label: "Nos tarifs", visible: true },
-    { id: "medecins", label: "Nos médecins", visible: true },
-    { id: "faq", label: "FAQ", visible: true },
-    { id: "gallery", label: "Galerie d’images", visible: true },
-  ];
 
 export default function SectionsList({
   colors,
@@ -102,7 +88,7 @@ export default function SectionsList({
       const payload = { sections: currentSections };
       const response = await api.patch(`/api/clinics/${clinic.id}/`, payload);
       if (response.status === 200 && response.data) {
-        setClinic(response.data);
+        setClinic(response.data.data);
         toast.success("Ordre des sections sauvegardé");
       } else {
         toast.error("Erreur lors de la sauvegarde");

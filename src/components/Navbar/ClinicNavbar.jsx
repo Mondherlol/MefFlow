@@ -46,6 +46,7 @@ export default function ClinicNavbar() {
 
     const doctorLinks = [
         { label: "Tableau de bord", path: "/doctor", icon: null},
+        { label: "Horaires", path: "/doctor/horaires", icon: null},
     ];
 
     const isClinicHome = loc.pathname.toLowerCase().includes("home");

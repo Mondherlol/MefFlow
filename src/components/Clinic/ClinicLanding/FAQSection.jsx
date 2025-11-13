@@ -2,11 +2,6 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { ChevronDown, HelpCircle, Mail, X } from "lucide-react";
 
-const defaultFaq = [
-  { q: "Comment prendre rendez-vous ?", a: "Depuis votre espace patient ou par téléphone à l’accueil de la clinique." },
-  { q: "Proposez-vous des urgences ?", a: "Oui, un service d’urgences est disponible 24/7 selon la spécialité." },
-  { q: "Quels documents apporter ?", a: "Pièce d’identité, carte d’assurance et ordonnances/examens récents si disponibles." },
-];
 
 // Convertit #RRGGBB vers rgba(r,g,b,a)
 function withAlpha(hex, a = 1) {
@@ -103,7 +98,7 @@ export default function FAQSection({ clinic , theme}) {
 
   const faqs = useMemo(() => {
     const list = Array.isArray(clinic?.faq) ? clinic.faq : [];
-    return list.length ? list : defaultFaq;
+    return list.length ? list : [];
   }, [clinic]);
 
   const [openIndex, setOpenIndex] = useState(0);
@@ -184,14 +179,14 @@ export default function FAQSection({ clinic , theme}) {
                     primary={primary}
                   />
                 ))
-              ) : (
-                <p className="text-slate-600">Aucune question trouvée pour « {query} ».</p>
-              )}
+              ) : 
+              clinic?.faq?.length > 0 && <p className="text-slate-600">Aucune question trouvée pour « {query} ».</p>
+              }
             </div>
 
             {!clinic?.faq?.length && (
               <p className="text-sm text-slate-500 mt-6">
-                Astuce : renseigne <code>clinic.faq</code> comme <code>[&#123;q: "…", a: "…"&#125;]</code> pour remplacer ces exemples.
+                Aucune question FAQ n'a été ajoutée pour le moment.
               </p>
             )}
           </div>

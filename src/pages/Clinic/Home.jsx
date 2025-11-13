@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 
 import { withAlpha } from "../../utils/colors";
-import { getImageUrl } from "../../utils/image";
 
 import InfoPill from "../../components/Clinic/ClinicLanding/InfoPill";
 import ServicesSection from "../../components/Clinic/ClinicLanding/ServicesSection";
@@ -20,7 +19,7 @@ import { useClinic } from "../../context/clinicContext";
 import Hero from "../../components/Clinic/ClinicLanding/Hero";
 import { useEffect, useState } from "react";
 import FAQSection from "../../components/Clinic/ClinicLanding/FAQSection";
-
+import { default_sections } from "../../utils/clinicDefaults";
 
 export default function Home() {
   const { clinic, theme, loading } = useClinic();
@@ -54,7 +53,7 @@ export default function Home() {
       </div>
 
       {/* Render sections in the order defined by clinic.sections (respect visibility) */}
-      {(Array.isArray(clinic.sections) ? clinic.sections : []).map((sec) => {
+      {(Array.isArray(clinic.sections)  && clinic.sections.length > 0  ? clinic.sections : default_sections ) .map((sec) => {
         if (!sec?.visible) return null;
         // Keep the hero as a section with slightly different spacing
         if (sec.id === "hero") {
