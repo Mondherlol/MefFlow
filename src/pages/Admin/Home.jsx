@@ -7,6 +7,9 @@ import {
 import { useClinic } from '../../context/clinicContext';
 import { useAuth } from '../../context/authContext';
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import api from '../../api/axios';
+import toast from 'react-hot-toast';
 
 const tokens = {
   brand: (clinic) => ({
@@ -31,7 +34,24 @@ const tokens = {
     'pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full opacity-10',
 };
 
-function StatCard({ label, value, tone = 'orange', icon: Icon }) {
+function StatCard({ label, value, tone = 'orange', icon: Icon, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className={tokens.kpi}>
+        <div className={`${tokens.kpiBackdrop} bg-${tone}-400`} />
+        <div className="flex items-center justify-between gap-4 animate-pulse">
+          <div>
+            <div className="h-4 w-32 rounded bg-slate-200" />
+            <div className="mt-2 h-8 w-24 rounded bg-slate-200" />
+          </div>
+          <div className={`p-3 rounded-xl bg-${tone}-50/70`}>
+            <div className="h-6 w-6 rounded bg-slate-200" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={tokens.kpi}>
       <div className={` ${tokens.kpiBackdrop} bg-${tone}-400`} />
@@ -88,10 +108,47 @@ const HomeAdmin = () => {
   const { clinic } = useClinic();
   const navigate = useNavigate();
   const brand = tokens.brand(clinic);
+  const [stats, setStats] = useState({});
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const stripeConnected =
     clinic?.billing?.stripe?.connected === true ||
     clinic?.stripeConnected === true;
+
+    useEffect(() => {
+      let mounted = true;
+      if (!clinic) {
+        setStats({});
+        setStatsLoading(false);
+        return;
+      }
+
+      const fetchStats = async () => {
+        try {
+          const res = await api.get('/api/clinics/my-stats/');
+          if (!mounted) return;
+          console.log('Fetched clinic stats', res.data);
+          setStats(res.data);
+        } catch (err) {
+          console.error('Failed to fetch clinic stats', err);
+          if (err.response?.data) {
+            toast.error(`Erreur: ${err.response.data.message || 'Impossible de charger les statistiques'}`);
+          } else {
+            toast.error('Erreur: Impossible de charger les statistiques');
+          }
+        } finally {
+          if (mounted) setStatsLoading(false);
+        }
+      };
+
+      fetchStats();
+
+      return () => {
+        mounted = false;
+      };
+    }, [clinic]);
+
+  
 
   return (
     <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/40 p-6 md:p-10">
@@ -149,9 +206,9 @@ const HomeAdmin = () => {
 
         {/* KPIs */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard label="Réceptionnistes" value="12" tone="indigo" icon={UserCog} />
-          <StatCard label="Médecins" value="8" tone="orange" icon={Stethoscope} />
-          <StatCard label="Patients" value="1 243" tone="sky" icon={Users} />
+          <StatCard label="Réceptionnistes" value={stats?.total_receptionists} isLoading={statsLoading} tone="indigo" icon={UserCog} />
+          <StatCard label="Médecins" value={stats?.total_doctors} isLoading={statsLoading} tone="orange" icon={Stethoscope} />
+          <StatCard label="Patients" value={stats?.total_patients} isLoading={statsLoading} tone="sky" icon={Users} />
           <StatCard label="Clinique" value={clinic?.name || '—'} tone="amber" icon={Building2} />
         </section>
 

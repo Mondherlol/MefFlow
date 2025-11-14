@@ -1,7 +1,10 @@
 // src/pages/doctor/Home.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import WeekCalendarDnD from "../../components/Calendar/WeekCalendar";
 import { useAuth } from "../../context/authContext";
+import { useClinic } from "../../context/clinicContext";
+import api from "../../api/axios";
+import toast from "react-hot-toast";
 
 function startOfWeek(date) {
   const d = new Date(date);
@@ -14,9 +17,10 @@ function startOfWeek(date) {
 
 export default function Home() {
   const { user } = useAuth();
+  const { clinic, theme} = useClinic();
   const [anchor, setAnchor] = useState(startOfWeek(new Date()));
-
-  const theme = { primary: "#0ea5e9", secondary: "#0f172a" }; // branche sur ton contexte clinic si besoin
+  const [schedules, setSchedules] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Mock RDV
   const [events, setEvents] = useState([
@@ -30,10 +34,7 @@ export default function Home() {
 
   // Dispos (background)
   const availability = [
-    { id: "a1", dayIndex: 0, start: "08:00", end: "12:00" },
-    { id: "a2", dayIndex: 0, start: "14:00", end: "16:00" },
-    { id: "a3", dayIndex: 2, start: "13:00", end: "17:00" },
-    { id: "a4", dayIndex: 4, start: "09:00", end: "12:00" },
+    { id: "a1", dayIndex: 0, start: "08:00", end: "12:00" }
   ];
 
   const onPrevWeek = () => setAnchor((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7));
@@ -44,8 +45,53 @@ export default function Home() {
     // TODO: sync API (PUT /api/doctor/appointments/:id { dayIndex, start, duration })
   };
 
+    // Fetch schedules for the doctor
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSchedules = async () => {
+      setIsLoading(true);
+      try {
+        const res = await api.get(`/api/doctors/${user?.doctor?.id}/schedules/`);
+        const arr = res.data.data;
+
+        if(arr.length === 0) {
+          // On recupere les horaires par defaut de la clinique
+          const resClinic =  await api.get(`/api/clinics/${user?.clinic?.id}/schedules/`);
+          const arrClinic = resClinic.data.data;
+          arr.push(...arrClinic);
+        }
+        const byWeek = {};
+        arr.forEach((s) => {
+          if (!s) return;
+          const w = Number(s.weekday);
+          byWeek[w] = { ...s, weekday: w, slots: Array.isArray(s.slots) ? s.slots : [] };
+        });
+        const normalized = Array.from({ length: 7 }).map((_, i) => byWeek[i] ?? null);
+        if (!cancelled) setSchedules(normalized);
+
+        console.log("Schedules fetched:", normalized);
+
+      } catch (err) {
+        console.error(err);
+        toast.error(
+          err?.response?.data?.message ?? "Une erreur est survenue lors de la récupération des horaires du médecin."
+        );
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    fetchSchedules();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if(isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/40 p-6 md:p-10">
+    <div className="min-h-[80dvh] bg-linear-to-b from-slate-50 to-slate-100/40 p-6 md:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
         <header className="flex flex-col gap-1">
           <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Espace médecin</h1>

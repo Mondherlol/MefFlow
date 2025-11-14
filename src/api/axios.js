@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// Use Vite env variable. Fallback to localhost if not set.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const api = axios.create({
@@ -8,7 +7,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Helper to set or remove Authorization header on the instance
 export const setAuthToken = (token) => {
   if (token) {
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`;

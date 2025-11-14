@@ -29,6 +29,7 @@ import Horaires from "./pages/Admin/Clinic/Horaires";
 
 // Doctor pages
 import HomeDoctor from "./pages/Doctor/Home";
+import DoctorHoraires from "./pages/Doctor/HorairesMedecin";
 
 // Other pages
 import Landing from "./pages/Landing";
@@ -45,10 +46,8 @@ import { useAuth } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ClinicRoute from "./components/ClinicRoute";
 import { Toaster } from "react-hot-toast";
-import { useClinic } from "./context/clinicContext";
 import EditClinic from "./pages/Admin/Clinic/EditClinic";
 import EditMedia from "./pages/Admin/Clinic/EditMedia";
-import DoctorHoraires from "./pages/Doctor/Horaires";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
@@ -56,10 +55,10 @@ export default function App() {
 
   const superAdminRoutes = [
     { path: "/__superadmin/login", component: SuperAdminLogin },
-    { path: "/__superadmin/dashboard", component: Dashboard, protectedRoles: ["SUPER_ADMIN"] },
-    { path: "/__superadmin/clinic-request/:id", component: ClinicRequest, protectedRoles: ["SUPER_ADMIN"] },
-    { path: "/__superadmin/clinic-infos/:id", component: ClinicInfos, protectedRoles: ["SUPER_ADMIN"] },
-    { path: "/__superadmin/manage-admins/:id", component: ManageAdmins, protectedRoles: ["SUPER_ADMIN"] },
+    { path: "/__superadmin/dashboard", component: Dashboard, protectedRoles: ["SUPER_ADMIN"], redirectTo: "/__superadmin/login" },
+    { path: "/__superadmin/clinic-request/:id", component: ClinicRequest, protectedRoles: ["SUPER_ADMIN"], redirectTo: "/__superadmin/login" },
+    { path: "/__superadmin/clinic-infos/:id", component: ClinicInfos, protectedRoles: ["SUPER_ADMIN"], redirectTo: "/__superadmin/login" },
+    { path: "/__superadmin/manage-admins/:id", component: ManageAdmins, protectedRoles: ["SUPER_ADMIN"], redirectTo: "/__superadmin/login" },
     { path: "/__superadmin/*", element: <Navigate to="/__superadmin/login" replace /> },
   ];
 
@@ -77,24 +76,24 @@ export default function App() {
   ];
 
   const adminRoutes = [
-    { path: "/admin", component: HomeAdmin, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/receptionnistes", component: Receptionnistes, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/medecins", component: Medecins, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/patients", component: Patients, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/clinique", component: ClinicInfo, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/clinique/custom-home", component: CustomHome, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/clinique/horaires", component: Horaires, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/clinique/edit", component: EditClinic, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/clinique/media", component: EditMedia, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/services", component: Services, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/tarifs", component: Tarifs, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/billing/stripe", component: StripeBilling, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
-    { path: "/admin/factures", component: Factures, clinicRoute: true, protectedRoles: ["ADMIN"], redirectTo: "/login" },
+    { path: "/admin", component: HomeAdmin, clinicRoute: true, protectedRoles: ["ADMIN"]},
+    { path: "/admin/receptionnistes", component: Receptionnistes, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/medecins", component: Medecins, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/patients", component: Patients, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/clinique", component: ClinicInfo, clinicRoute: true, protectedRoles: ["ADMIN"]},
+    { path: "/admin/clinique/custom-home", component: CustomHome, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/clinique/horaires", component: Horaires, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/clinique/edit", component: EditClinic, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/clinique/media", component: EditMedia, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/services", component: Services, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/tarifs", component: Tarifs, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/billing/stripe", component: StripeBilling, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/factures", component: Factures, clinicRoute: true, protectedRoles: ["ADMIN"] },
   ];
 
   const doctorRoutes = [
-    { path: "/doctor", component: HomeDoctor, clinicRoute: true },
-    { path: "/doctor/horaires", component: DoctorHoraires, clinicRoute: true, protectedRoles: ["DOCTOR"], redirectTo: "/login" },
+    { path: "/doctor", component: HomeDoctor, clinicRoute: true, protectedRoles: ["MEDECIN"] },
+    { path: "/doctor/horaires", component: DoctorHoraires, clinicRoute: true, protectedRoles: ["MEDECIN"] },
   ];
 
   const clinicRoutes = [...clinicPublicRoutes, ...adminRoutes, ...doctorRoutes];

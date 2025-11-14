@@ -3,12 +3,11 @@ import { useAuth } from '../context/authContext'
 import Loader from './Loader'
 
 
-export default function ProtectedRoute({ children, roles = [], redirectTo = '/__superadmin/login' }) {
+export default function ProtectedRoute({ children, roles = [], redirectTo = '/login' }) {
   const { user, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
-    // show a loader while auth state initializes
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader />

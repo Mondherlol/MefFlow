@@ -101,7 +101,19 @@ const Card = ({ className = "", children }) => (
               localStorage.removeItem("password");
             }
 
-            login(response.data.user, response.data.access, response.data.refresh);
+            // Recuperer les infos du user
+            const userResponse = await api.get("/api/auth/me/", {
+              headers: {
+                Authorization: `Bearer ${response.data.access}`,
+              },
+            });
+
+            if( userResponse.status !== 200 ) {
+              setError("Impossible de récupérer les informations de l'utilisateur.");
+              return;
+            }
+
+            login(userResponse.data, response.data.access, response.data.refresh);
 
             navigate("/admin", { replace: true });
         }

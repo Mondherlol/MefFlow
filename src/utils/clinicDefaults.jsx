@@ -8,6 +8,6 @@
     { id: "medecins", label: "Nos médecins", visible: false },
     { id: "faq", label: "FAQ", visible: true },
     { id: "gallery", label: "Galerie d’images", visible: false },
-  ];
+];
 
 export { default_sections };
