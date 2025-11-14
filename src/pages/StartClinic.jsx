@@ -7,7 +7,6 @@ import {
   CheckCircle2, 
   ChevronRight, 
   ChevronLeft,
-  LoaderCircle
 } from "lucide-react";
 import "react-phone-number-input/style.css";
 import { getCountries, getCountryCallingCode } from "react-phone-number-input";

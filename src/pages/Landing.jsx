@@ -33,7 +33,6 @@ const tokens = {
 };
 
 function Section({ id, className = "", children }) {
-  // simple reveal variant for sections
   const reveal = {
     hidden: { opacity: 0, y: 18 },
     visible: { opacity: 1, y: 0 },
@@ -245,9 +244,7 @@ export default function Landing() {
 
           <ImageWithFallback
             srcs={[
-              "/assets/hero-medflow-light.png",
-              "/assets/hero-medflow.png",
-              "/assets/landing-hero.png",
+              "../assets/reception.png"
             ]}
             alt="Aperçu MedFlow"
             ratio="4/3"

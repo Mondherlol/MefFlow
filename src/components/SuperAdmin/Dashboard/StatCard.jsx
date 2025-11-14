@@ -22,7 +22,7 @@ function StatCard({ icon, label, value, sub, loading = false }) {
   return (
     <div className={`${tokens.card} ${tokens.cardHover} p-5`}>
       <div className="flex items-center gap-3">
-        <div className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-sky-100 to-indigo-100 text-sky-700 ring-1 ring-sky-200">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-linear-to-br from-sky-100 to-indigo-100 text-sky-700 ring-1 ring-sky-200">
           {icon}
         </div>
         <div>

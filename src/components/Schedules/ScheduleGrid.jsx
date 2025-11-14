@@ -13,6 +13,8 @@ export default function ScheduleGrid({
   savingWeekdays,
   closedIcon: ClosedIcon,
   closedText = "Fermé",
+  openBtnText = "Ouvert",
+  closeBtnText = "Fermé",
 }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -47,7 +49,7 @@ export default function ScheduleGrid({
             const overlap = hasOverlap(slots);
             const isOpen = Boolean(data) && (typeof data.open === "boolean" ? data.open : true);
             return (
-              <div key={day.id} className="relative min-h-[160px] p-3 border-r border-slate-200 last:border-r-0 border-b bg-white group">
+              <div key={day.id} className="relative min-h-40 p-3 border-r border-slate-200 last:border-r-0 border-b bg-white group">
                 {savingWeekdays.has(Number(day.id)) && (
                   <div className="absolute top-2 right-2 flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full border border-slate-300 bg-white shadow-sm flex items-center justify-center">
@@ -64,7 +66,7 @@ export default function ScheduleGrid({
                       isOpen ? "bg-green-500 text-white shadow-sm hover:bg-green-600" : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                     }`}
                   >
-                    {isOpen ? (data?.open === false ? "Ouvert" : "Ouvert") : "Fermé"}
+                    {isOpen ? openBtnText : closeBtnText}
                   </button>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

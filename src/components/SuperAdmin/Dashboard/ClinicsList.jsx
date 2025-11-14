@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 
 export default function ClinicsList({ tokens , fetchStats }) {
   const navigate = useNavigate();
-  const [search, setSearch] = useState(""); // bound to input
+  const [search, setSearch] = useState(""); 
   const [status, setStatus] = useState("all");
   const [clinics, setClinics] = useState([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, perPage: 5, totalPages: 1 });
@@ -40,13 +40,11 @@ export default function ClinicsList({ tokens , fetchStats }) {
     let mounted = true;
     const controller = new AbortController();
 
-    // debounce so we don't flood the API while typing
+    // pour pas request a chaque tape
     const t = setTimeout(() => {
       const params = [`page=${page}`, `perPage=${perPage}`];
       if (search && search !== "") params.push(`name=${encodeURIComponent(search)}`);
       if (status && status !== "all") {
-        // send a status filter to server; adjust param name as your API expects
-        // here we assume boolean active flag for active/paused as used previously
         params.push(status === "active" ? "active=true" : "active=false");
       }
       const qs = params.join("&");
@@ -55,18 +53,15 @@ export default function ClinicsList({ tokens , fetchStats }) {
         .then((response) => {
           if (!mounted) return;
           if (response.status === 200) {
-            // response.data.data => items, response.data.meta => pagination info
             setClinics(response.data.data || []);
             if (response.data.meta) {
               setMeta(response.data.meta);
-              // sync page/perPage with server response (if server adjusts them)
               setPage(response.data.meta.page || 1);
               setPerPage(response.data.meta.perPage || perPage);
             }
           }
         })
         .catch((err) => {
-          if (err.name === "CanceledError" || err.name === "AbortError") return;
           toast.error("Erreur lors de la récupération des cliniques.");
         })
         .finally(() => {
@@ -86,7 +81,6 @@ export default function ClinicsList({ tokens , fetchStats }) {
     paramsRef.current = { search, page, perPage, status };
   }, [search, page, perPage, status]);
 
-  // Immediate reload function (reads params from ref)
   const reloadClinicsImmediate = async () => {
     const { search: s, page: p, perPage: pp, status: st } = paramsRef.current;
     setIsLoading(true);
@@ -115,14 +109,12 @@ export default function ClinicsList({ tokens , fetchStats }) {
     }
   };
 
-  // Listen for external refresh events (e.g., after accepting a clinic request)
   useEffect(() => {
     const handler = () => {
       reloadClinicsImmediate();
     };
     window.addEventListener('clinics:refresh', handler);
     return () => window.removeEventListener('clinics:refresh', handler);
-    // we intentionally omit deps so we add the listener once; handler reads latest params via ref
   }, []);
 
   // Close active menu on outside click
@@ -132,7 +124,6 @@ export default function ClinicsList({ tokens , fetchStats }) {
     return () => document.removeEventListener('click', onDocClick);
   }, []);
 
-  // Action: delete clinic
   const handleDeleteClinic = async () => {
     const clinic = deleteConfirm.clinic;
     if (!clinic) return;
@@ -151,9 +142,7 @@ export default function ClinicsList({ tokens , fetchStats }) {
     }
   };
 
-  // Action: change clinic status
   const handleChangeStatus = async (clinicId, newStatus) => {
-    // set loading for only this row
     setLoadingRows((prev) => ({ ...prev, [clinicId]: true }));
     try {
       const resp = await api.post(`/api/clinics/${clinicId}/set_status/`, { status: newStatus });
@@ -191,8 +180,6 @@ export default function ClinicsList({ tokens , fetchStats }) {
     }
   };
 
-
-  // Loading skeleton matching clinics table layout
   const LoadingSkeleton = () => (
     <div className="space-y-3">
       {[...Array(perPage)].map((_, index) => (
@@ -222,7 +209,6 @@ export default function ClinicsList({ tokens , fetchStats }) {
     </div>
   );
 
-  // No client-side status filtering — server returns already filtered list.
   const displayed = useMemo(() => clinics, [clinics]);
 
   return (
@@ -238,7 +224,7 @@ export default function ClinicsList({ tokens , fetchStats }) {
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1); // reset page when searching
+                setPage(1); 
               }}
               placeholder="Rechercher (nom, domaine, id)…"
               className={`h-10 w-64 rounded-xl border border-slate-300 bg-white pl-9 pr-3 text-sm ${tokens.focus}`}

@@ -48,6 +48,8 @@ import ClinicRoute from "./components/ClinicRoute";
 import { Toaster } from "react-hot-toast";
 import EditClinic from "./pages/Admin/Clinic/EditClinic";
 import EditMedia from "./pages/Admin/Clinic/EditMedia";
+import ReceptionnistHome from "./pages/Receptionnist/Home";
+import CreatePatient from "./pages/Receptionnist/CreatePatient";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
@@ -96,7 +98,12 @@ export default function App() {
     { path: "/doctor/horaires", component: DoctorHoraires, clinicRoute: true, protectedRoles: ["MEDECIN"] },
   ];
 
-  const clinicRoutes = [...clinicPublicRoutes, ...adminRoutes, ...doctorRoutes];
+  const receptionnistRoutes = [
+   { path: "/reception", component: ReceptionnistHome, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
+   { path: "/reception/patients/new", component: CreatePatient, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
+  ];
+
+  const clinicRoutes = [...clinicPublicRoutes, ...adminRoutes, ...doctorRoutes, ...receptionnistRoutes];
 
   const renderRoute = (r) => {
     if (r.element) return <Route key={r.path} path={r.path} element={r.element} />;

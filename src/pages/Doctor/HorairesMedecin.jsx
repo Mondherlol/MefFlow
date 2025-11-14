@@ -24,11 +24,6 @@ const toHHMM = (min) =>
   `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 
 const sortSlots = (slots = []) => [...slots].sort((a, b) => toMin(a.start) - toMin(b.start));
-const hasOverlap = (slots = []) => {
-  const s = sortSlots(slots);
-  for (let i = 0; i < s.length - 1; i++) if (toMin(s[i].end) > toMin(s[i + 1].start)) return true;
-  return false;
-};
 
 const DAYS = [
   { id: 0, label: "Lundi" },
@@ -123,7 +118,6 @@ export default function DoctorHoraires() {
     });
   }, []);
 
-  // API call: does actual PUT/POST. Called by debounced flush or directly when needed.
   const saveScheduleToApi = useCallback(
     async (schedule) => {
       if (!user) return;
@@ -148,7 +142,7 @@ export default function DoctorHoraires() {
     [user, markSaving]
   );
 
-  // Schedule a save (debounced) for a given weekday
+  // Schedule a save (after debounce)
   const scheduleSave = useCallback(
     (weekday, schedule, delay = 700) => {
       const timers = saveTimersRef.current;
@@ -196,7 +190,6 @@ export default function DoctorHoraires() {
     [markSaving]
   );
 
-  // Accessors
   const getDay = useCallback(
     (weekday) => {
       const arr = Array.isArray(schedules) ? schedules : [];
@@ -420,6 +413,8 @@ export default function DoctorHoraires() {
             savingWeekdays={savingWeekdays}
             closedIcon={Bed}
             closedText="Journée de repos"
+            openBtnText="Disponible"
+            closeBtnText="Jour Off"
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-6 bg-slate-50 rounded-2xl border border-slate-200">
