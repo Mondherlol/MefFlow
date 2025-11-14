@@ -16,6 +16,9 @@ import {
   Building2,
   Brain,
 } from "lucide-react";
+import receptionImg from "../assets/reception.png";
+import adminImg from "../assets/admin.png";
+import medecinImg from "../assets/medecin.png";
 
 /* ---------- Design Tokens pour tailwind ---------- */
 const tokens = {
@@ -163,15 +166,17 @@ function TestimonialCard({ quote, author, role }) {
 }
 
 /* Gestion des images avec fallback */
-function ImageWithFallback({ srcs = [], alt = "", ratio = "16/9", className = "" }) {
+function ImageWithFallback({ srcs = [], alt = "", ratio = "16/9", className = "", preserveWidth = false }) {
   const [idx, setIdx] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   const onError = () => (idx < srcs.length - 1 ? setIdx(idx + 1) : setFailed(true));
+  const containerClasses = `relative overflow-hidden rounded-2xl border ${tokens.border} ${tokens.glass} ${className}`;
+
   return (
     <motion.div
-      className={`relative overflow-hidden rounded-2xl border ${tokens.border} ${tokens.glass} ${className}`}
-      style={{ aspectRatio: ratio }}
+      className={containerClasses}
+      style={preserveWidth ? undefined : { aspectRatio: ratio }}
       initial={{ opacity: 0, scale: 0.98 }}
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true, amount: 0.12 }}
@@ -184,12 +189,11 @@ function ImageWithFallback({ srcs = [], alt = "", ratio = "16/9", className = ""
             alt={alt}
             onLoad={() => setLoaded(true)}
             onError={onError}
-            className={`h-full w-full object-cover transition-opacity duration-700 ${
-              loaded ? "opacity-100" : "opacity-0"
-            }`}
+            className={`transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"} ${preserveWidth ? "w-full h-auto" : "h-full w-full object-cover"}`}
           />
+
           {!loaded && (
-            <div className="absolute inset-0 animate-pulse bg-linear-to-r from-slate-100 via-slate-50 to-slate-100" />
+            <div className={preserveWidth ? "min-h-[120px] animate-pulse bg-linear-to-r from-slate-100 via-slate-50 to-slate-100 absolute inset-x-0 top-0 bottom-0" : "absolute inset-0 animate-pulse bg-linear-to-r from-slate-100 via-slate-50 to-slate-100"} />
           )}
         </>
       ) : (
@@ -243,9 +247,8 @@ export default function Landing() {
           </div>
 
           <ImageWithFallback
-            srcs={[
-              "../assets/reception.png"
-            ]}
+            srcs={[adminImg]}
+            preserveWidth={true}
             alt="Aperçu MedFlow"
             ratio="4/3"
             className="shadow-[0_20px_60px_rgba(14,165,233,.18)]"
@@ -308,15 +311,15 @@ export default function Landing() {
         <div className="grid gap-6 md:grid-cols-2">
           <ImageWithFallback
             srcs={[
-              "/assets/use-cases.png",
-              "/assets/uml-usecases.png",
-              "/assets/medflow-usecases.png",
+              receptionImg
             ]}
+             preserveWidth={true}
             alt="Diagramme de cas d’utilisation"
             ratio="16/10"
           />
             <ImageWithFallback
-              srcs={["/assets/screen-dashboard-light.png", "/assets/screen-dashboard.png"]}
+              srcs={[medecinImg]}
+              preserveWidth={true}
               alt="Tableau de bord"
               ratio="16/10"
             />
@@ -491,7 +494,8 @@ export default function Landing() {
               className="absolute inset-0 bg-linear-to-br from-white to-sky-200"
             />
             <ImageWithFallback
-              srcs={["/assets/cta-visual.png", "/assets/hero-medflow-light.png"]}
+              srcs={[adminImg]}
+              preserveWidth={true}
               alt="Aperçu MedFlow clair"
               ratio="16/10"
               className="m-6 md:m-8"
