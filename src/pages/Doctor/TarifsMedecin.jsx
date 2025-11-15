@@ -4,9 +4,11 @@ import { useAuth } from "../../context/authContext";
 import api from "../../api/axios";
 import toast from "react-hot-toast";
 import { Save, Clock, DollarSign } from "lucide-react";
+import { useClinic } from "../../context/clinicContext";
 
 export default function TarifsMedecin() {
   const { user } = useAuth() || {};
+  const {clinic } = useClinic() || {};
   const doctor = user?.doctor ?? {};
 
   const [duration, setDuration] = useState(doctor.duree_consultation ?? 15);
@@ -39,6 +41,7 @@ export default function TarifsMedecin() {
     const payload = {
       duree_consultation: Number(duration) || 0,
       tarif_consultation: Number(price) || 0,
+      clinic_id : clinic?.id,
     };
 
     setSaving(true);
