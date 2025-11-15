@@ -94,7 +94,7 @@ export default function FloatingConsultationForm({
 
     try {
       setSubmitting(true);
-      await api.post(`/api/consultations`, payload);
+      await api.post(`/api/consultations/`, payload);
       toast.success("Consultation créée");
       if (onCreated) onCreated();
       else navigate("/reception/consultations");
