@@ -5,9 +5,9 @@ import {
   Users,
   CalendarDays,
   PlusCircle,
-  Search,
   Bell
 } from "lucide-react";
+import SearchBar from "../../components/Reception/SearchBar";
 import { useClinic } from "../../context/clinicContext";
 import { useAuth } from "../../context/authContext";
 import ActionTile from "../../components/Reception/ActionTile";
@@ -28,7 +28,7 @@ export default function ReceptionnistHome() {
   const { clinic } = useClinic() || {};
   const { user } = useAuth() || {};
 
-  const [query, setQuery] = useState("");
+  
 
   // theme colors (si ta clinic fournit hex, utilise les — sinon fallback)
   const primaryColor = clinic?.theme?.primaryColor || "#0ea5e9";
@@ -188,28 +188,8 @@ export default function ReceptionnistHome() {
               </div>
             </div>
 
-            {/* recherche */}
-            <form onSubmit={onSearch} className="mt-4 flex gap-3">
-              <div className="flex-1 relative">
-                <input
-                  value={query}
-                  onChange={e => setQuery(e.target.value)}
-                  placeholder="Rechercher patient par nom, téléphone ou dossier..."
-                  className="w-full rounded-lg border px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-opacity-50 bg-white"
-                  style={{ borderColor: "#e6edf3" }}
-                />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                  <Search size={16} />
-                </div>
-              </div>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-md text-white font-medium shadow hover:brightness-95 transition cursor-pointer"
-                style={{ background: primaryColor }}
-              >
-                Rechercher
-              </button>
-            </form>
+            {/* recherche intégrée */}
+            <SearchBar />
           </div>
 
           <div className="space-y-3">

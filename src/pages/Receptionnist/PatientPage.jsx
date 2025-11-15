@@ -237,7 +237,7 @@ export default function PatientPage() {
               <Edit2 className="w-4 h-4 text-slate-700" /> Éditer
             </button>
 
-            <button onClick={() => navigate(`/reception/consultations/new?patientId=${patientId}`)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-sky-600 text-white shadow hover:scale-[1.01] transition">
+            <button onClick={() => navigate(`/reception/consultations/new?patientId=${patientId}`)} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-sky-500 to-sky-600 text-white shadow hover:scale-[1.01] transition">
               <PlusCircle className="w-4 h-4" /> Nouveau RDV
             </button>
 

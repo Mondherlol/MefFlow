@@ -76,7 +76,7 @@ export default function ReceptionSearch() {
       .get(`/api/clinics/${clinic?.id}/patients/`, { params: { name: q } })
       .then((res) => {
         if (cancelled) return;
-        setResults(res.data || []);
+        setResults(res.data.data || []);
       })
       .catch((err) => {
         if (cancelled) return;
