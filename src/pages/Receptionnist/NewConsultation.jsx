@@ -5,6 +5,7 @@ import WeekCalendar from "../../components/Calendar/WeekCalendar";
 import { useClinic } from "../../context/clinicContext";
 import { useAuth } from "../../context/authContext";
 import toast from "react-hot-toast";
+import FloatingConsultationForm from "../../components/Reception/FloatingConsultationForm";
 
 function getMonday(d) {
     const date = new Date(d);
@@ -117,30 +118,7 @@ export default function NewConsultation() {
         setWeekStart(getMonday(d));
     }
 
-    async function handleSubmit(e) {
-        e?.preventDefault?.();
-        if (!selectedDoctor) return toast.error("Veuillez sélectionner un médecin");
-        if (!selectedSlot) return toast.error("Veuillez sélectionner un créneau");
-        if (!patient) return toast.error("Veuillez renseigner le patient");
-
-        const payload = {
-            date: selectedSlot.date,
-            heure_debut: selectedSlot.start,
-            diagnostique: diagnostique || "",
-            ordonnance: ordonnance || "",
-            doctor: selectedDoctor.id,
-            patient,
-        };
-
-        try {
-            await api.post(`/api/consultations`, payload);
-            toast.success("Consultation créée");
-            navigate("/reception/consultations");
-        } catch (err) {
-            console.error(err);
-            toast.error("Erreur lors de la création de la consultation");
-        }
-    }
+    // Creation is handled by the floating form component below
 
     return (
         <div className="min-h-[80dvh] p-6 md:p-10">
@@ -234,54 +212,7 @@ export default function NewConsultation() {
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit} className="max-w-3xl bg-white rounded-2xl p-4 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="text-xs text-slate-600">Médecin</label>
-                            <div className="mt-1 font-medium">{selectedDoctor ? selectedDoctor.user?.full_name : "—"}</div>
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-600">Date</label>
-                            <div className="mt-1">{selectedSlot ? selectedSlot.date : "—"}</div>
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-600">Heure début</label>
-                            <div className="mt-1">{selectedSlot ? selectedSlot.start : "—"}</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label className="text-xs text-slate-600">Patient (nom ou id)</label>
-                            <input value={patient} onChange={(e) => setPatient(e.target.value)} className="w-full mt-2 rounded-lg border px-3 py-2" />
-                        </div>
-
-                        <div>
-                            <label className="text-xs text-slate-600">Durée / Tarif</label>
-                            <div className="mt-2 text-sm text-slate-500">{selectedDoctor ? `${selectedDoctor.duree_consultation || "—"} min · ${selectedDoctor.tarif_consultation || "—"} TND` : "—"}</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <label className="text-xs text-slate-600">Diagnostique</label>
-                            <textarea value={diagnostique} onChange={(e) => setDiagnostique(e.target.value)} className="w-full mt-2 rounded-lg border px-3 py-2 h-24" />
-                        </div>
-                        <div>
-                            <label className="text-xs text-slate-600">Ordonnance</label>
-                            <textarea value={ordonnance} onChange={(e) => setOrdonnance(e.target.value)} className="w-full mt-2 rounded-lg border px-3 py-2 h-24" />
-                        </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-3">
-                        <button type="submit" className="px-4 py-2 rounded-md text-white" style={{ background: "#0ea5e9" }}>
-                            Créer la consultation
-                        </button>
-                        <button type="button" onClick={() => navigate(-1)} className="px-4 py-2 rounded-md border">
-                            Annuler
-                        </button>
-                    </div>
-                </form>
+                <FloatingConsultationForm selectedDoctor={selectedDoctor} selectedSlot={selectedSlot} />
             </div>
         </div>
     );
