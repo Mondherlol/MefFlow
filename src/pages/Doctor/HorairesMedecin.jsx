@@ -3,39 +3,14 @@ import { useAuth } from "../../context/authContext";
 import {
   Calendar,
   Save,
-  Plus,
-  Copy,
-  ClipboardPaste,
-  AlertTriangle,
-  Pencil,
   Bed,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import SlotModal from "../../components/Admin/ManageClinic/Horaires/SlotModal";
 import api from "../../api/axios";
 import ScheduleGrid from "../../components/Schedules/ScheduleGrid";
-
-// utils
-const toMin = (hhmm) => {
-  const [h = 0, m = 0] = (hhmm || "00:00").split(":").map(Number);
-  return h * 60 + m;
-};
-const toHHMM = (min) =>
-  `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
-
-const sortSlots = (slots = []) => [...slots].sort((a, b) => toMin(a.start) - toMin(b.start));
-
-const DAYS = [
-  { id: 0, label: "Lundi" },
-  { id: 1, label: "Mardi" },
-  { id: 2, label: "Mercredi" },
-  { id: 3, label: "Jeudi" },
-  { id: 4, label: "Vendredi" },
-  { id: 5, label: "Samedi" },
-  { id: 6, label: "Dimanche" },
-];
-
-const defaultInterval = () => ({ start: "09:00", end: "17:00" });
+import { toMin, toHHMM, sortSlots, DAYS, defaultInterval } from "../../utils/horairesUtils";
+import MedecinTemplate from "../../components/Doctor/MedecinTemplate";
 
 export default function DoctorHoraires() {
   const { user } = useAuth() || {};
@@ -49,7 +24,7 @@ export default function DoctorHoraires() {
   // pending debounce timers per weekday
   const saveTimersRef = useRef(new Map());
 
-  // to avoid memory leaks: track mounted
+  // JSP trop ça regle un bug bizarre
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
@@ -373,14 +348,11 @@ export default function DoctorHoraires() {
   }, []);
 
   return (
-    <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/40 p-6 md:p-10">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <header className="flex flex-col gap-1">
-          <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">Horaires</h1>
-          <p className="text-sm text-slate-500">Gérez vos plages horaires de consultation</p>
-        </header>
+    <MedecinTemplate title="Horaires" breadcrumbs={[{ label: "Accueil médecin", to: "/doctor" }, { label: "Horaires", current: true }] }>
+      <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/40 p-6 md:p-10">
+        <div className="max-w-6xl mx-auto space-y-6">
 
-        <div className="space-y-6">
+          <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-100 rounded-xl">
@@ -448,5 +420,6 @@ export default function DoctorHoraires() {
         />
       </div>
     </div>
+    </MedecinTemplate>
   );
 }

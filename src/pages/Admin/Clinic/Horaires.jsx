@@ -107,7 +107,7 @@ export default function HoursPro() {
     };
   }, [clinic]);
 
-  // helpers to show small saving indicator (non-blocking)
+  // helpers to show small saving indicator 
   const markSaving = useCallback((weekday, on = true) => {
     setSavingWeekdays((prev) => {
       const next = new Set(prev);
@@ -158,7 +158,7 @@ export default function HoursPro() {
     timers.set(key, t);
   }, [saveScheduleToApi]);
 
-  // flush all pending saves immediately
+  // declencer tous les saves en attente immédiatement
   const flushPendingSaves = useCallback(() => {
     const timers = saveTimersRef.current;
     const toFlush = Array.from(timers.keys());
@@ -204,7 +204,7 @@ export default function HoursPro() {
     },
     [scheduleSave]
   );
-
+  
   // Actions
   const openEveryDay = useCallback((e) => {
     e?.preventDefault?.();
