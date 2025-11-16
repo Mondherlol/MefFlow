@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn, User, UserPlus, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, LogIn, User, UserPlus, LogOut, LayoutDashboard, HeartPlus } from "lucide-react";
 import { useClinic } from "../../context/clinicContext";
 import { useAuth } from "../../context/authContext";
 
@@ -50,8 +50,8 @@ export default function ClinicNavbar() {
     ];
 
     const receptionnistLinks = [
-        { label: "Tableau de bord", path: "/reception", icon: <LayoutDashboard className="w-4 h-4"/>},
-        { label: "Créer un patient", path: "/reception/patients/new", icon: <UserPlus className="w-4 h-4"/>},
+        { label: "Tableau de bord", path: "/reception", icon: null},
+        { label: "Médecins", path: "/reception/doctors", icon: null},
     ];
 
     const isClinicHome = loc.pathname.toLowerCase().includes("home");

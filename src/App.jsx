@@ -46,6 +46,7 @@ import Doctors from "./pages/Receptionnist/Doctors";
 import Consultations from "./pages/Receptionnist/Consultations";
 import Requests from "./pages/Receptionnist/Requests";
 import NewConsultation from "./pages/Receptionnist/NewConsultation";
+import PlanningMedecin from "./pages/Receptionnist/PlanningMedecin";
 
 // Other pages
 import Landing from "./pages/Landing";
@@ -122,6 +123,7 @@ export default function App() {
    { path :"/reception/requests", component: Requests, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
    { path: "/reception/patients", component: PatientsListPage, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
    { path: "/reception/consultations/new", component: NewConsultation, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
+   { path: "/reception/emploi/:id", component: PlanningMedecin, clinicRoute: true, protectedRoles: ["RECEPTIONNISTE"] },
 
   ];
 

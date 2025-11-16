@@ -252,7 +252,7 @@ export default function Doctors() {
                       <div className="flex flex-row items-end gap-3">
                         <div>
                           <button
-                            onClick={() => navigate(`/reception/appointments?doctorId=${d.id}`)}
+                            onClick={() => navigate(`/reception/emploi/${d.id}`)}
                             className="inline-flex cursor-pointer items-center gap-2 px-6 py-2 rounded-lg text-white font-medium shadow"
                             title="Voir l'emploi du temps"
                             style={{ backgroundColor: primaryColor, minWidth: 150 }}
