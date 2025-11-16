@@ -15,6 +15,8 @@ export default function NewConsultation() {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [horaires, setHoraires] = useState([]);
     const [consultations, setConsultations] = useState([]);
+    const [loadingHoraires, setLoadingHoraires] = useState(false);
+    const [loadingConsultations, setLoadingConsultations] = useState(false);
 
     const [consultationProvisoire, setConsultationProvisoire] = useState({
         date: null,
@@ -46,7 +48,12 @@ export default function NewConsultation() {
 
     // fetch horaires when doctor selected
     useEffect(() => {
-        if (!selectedDoctor) return setHoraires([]);
+        if (!selectedDoctor) {
+            setHoraires([]);
+            setLoadingHoraires(false);
+            return;
+        }
+        setLoadingHoraires(true);
         // Recuperer les horaires du medecin
         api
             .get(`/api/doctors/${selectedDoctor.id}/schedules/`)
@@ -54,14 +61,17 @@ export default function NewConsultation() {
             .catch((err) => {
                 console.error(err);
                 toast.error("Impossible de charger les disponibilités du médecin");
-            });
+            })
+            .finally(() => setLoadingHoraires(false));
         // Recuperer les consultations du medecin pour la semaine en cours
         const startDate = formatDateYMD(weekStart);
         const endDate = formatDateYMD(new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 6));
         fetchConsultationsByDoctorBetweenDates(selectedDoctor.id, startDate, endDate);
     }, [selectedDoctor]);
 
+
     const fetchConsultationsByDoctorBetweenDates = async (doctorId, startDate, endDate) => {
+        setLoadingConsultations(true);
         try {
             // YYYY-MM-DD pour els dates en query
             const formatedStart = formatDateYMD(new Date(startDate));
@@ -73,6 +83,8 @@ export default function NewConsultation() {
             console.error(err);
             toast.error("Impossible de charger les consultations du médecin");
             return [];
+        } finally {
+            setLoadingConsultations(false);
         }
     };
 
@@ -205,6 +217,7 @@ export default function NewConsultation() {
                             slotMinutes={15}
                             consultations={consultations}
                             availability={availabilityForCalendar}
+                            loading={loadingHoraires || loadingConsultations}
                             onChange={() => { toast("Vous ne pouvez pas décaler ce RDV.", {icon: "☹️"}); }}
                             consultationProvisoire={consultationProvisoire}
                             setConsultationProvisoire={setConsultationProvisoire}

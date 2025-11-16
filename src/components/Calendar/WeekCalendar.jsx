@@ -1,5 +1,6 @@
 // src/components/calendar/WeekCalendarDnD.jsx
 import  { useMemo, useRef, useState, useCallback } from "react";
+import Loader from "../Loader.jsx";
 import { DndContext, useSensor, useSensors, PointerSensor, DragOverlay } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -19,6 +20,7 @@ export default function WeekCalendarDnD({
   theme = {},
   consultationProvisoire,
   setConsultationProvisoire,
+  loading = false,
 }) {
   const primary = theme?.primary || "#0ea5e9";
   const secondary = theme?.secondary || "#0f172a";
@@ -293,7 +295,7 @@ const normalizedConsultations = useMemo(() => {
         dayIndex,
         start: consultationProvisoire.start,
         duration: Number(consultationProvisoire.duree || consultationProvisoire.duration || 15),
-        title: consultationProvisoire.title || "PROV",
+        title: consultationProvisoire.title || "—",
         provisional: true,
         raw: { provisional: true },
       });
@@ -306,7 +308,12 @@ const normalizedConsultations = useMemo(() => {
 
   // DayColumn and DraggableEvent extracted to ./DayColumn.jsx
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+      {loading && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/70">
+          <Loader fullScreen={false} message={"Chargement..."} />
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-slate-200">
         <div className="flex items-center gap-2">

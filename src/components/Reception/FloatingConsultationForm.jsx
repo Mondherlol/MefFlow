@@ -13,11 +13,14 @@ function formatDateYMD(d) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-function nowTimeRounded() {
-  const d = new Date();
-  d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5, 0, 0);
-  return d.toTimeString().slice(0, 5);
-}
+
+  const getMondayOfDate = (d) => {
+    d = new Date(d);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  };
+
 
 /* Floating form */
 export default function FloatingConsultationForm({
@@ -35,13 +38,14 @@ export default function FloatingConsultationForm({
   const [loadingPatient, setLoadingPatient] = useState(true);
 
   const [date, setDate] = useState(() =>
-    selectedSlot ? selectedSlot.date : formatDateYMD(new Date())
+    selectedSlot ? selectedSlot.date : formatDateYMD(getMondayOfDate(new Date()))
   );
   const [time, setTime] = useState(() =>
-    selectedSlot ? selectedSlot.start : nowTimeRounded()
+    selectedSlot ? selectedSlot.start : "08:00"
   );
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+
 
   useEffect(() => {
     if (!patientId || !clinic?.id || !loadingPatient) return;
