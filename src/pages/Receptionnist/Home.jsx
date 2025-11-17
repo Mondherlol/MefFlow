@@ -17,6 +17,7 @@ import ActionTile from "../../components/Reception/ActionTile";
 import ConsultationRow from "../../components/Reception/ConsultationRow";
 import toast from "react-hot-toast";
 import api from "../../api/axios";
+import HistoriqueSection from "../../components/Reception/HistoriqueSection";
 
 
 export default function ReceptionnistHome() {
@@ -58,13 +59,16 @@ export default function ReceptionnistHome() {
         const diffMinutes = (consultTime - now) / 60000;
         return diffMinutes >= -30 && diffMinutes <= 60;
       });
-      setNowConsultations(filtered);
+      setNowConsultations(filtered);    
 
-      // Mettre ceux à venir dans upcoming
+      // Mettre ceux à venir dans upcoming — exclure ceux déjà listés dans `nowConsultations`
+      const nowIds = new Set(filtered.map(n => n.id).filter(Boolean));
       const upcomingFiltered = data.filter(c => {
         const heureDebut = c.heure_debut;
         const consultTime = new Date(`${c.date}T${heureDebut}`);
-        return consultTime > now;
+        if (!(consultTime > now)) return false;
+        if (c.id && nowIds.has(c.id)) return false;
+        return true;
       });
       setUpcoming(upcomingFiltered);
 
@@ -259,6 +263,8 @@ export default function ReceptionnistHome() {
           </div>
         </section>
 
+        {/* HISTORIQUE DE LA JOURNEE */}
+        <HistoriqueSection pastToday={pastToday} />
       </div>
     </div>
   );
