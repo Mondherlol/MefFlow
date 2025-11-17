@@ -1,8 +1,11 @@
-import { Phone, Check, Repeat, X } from "lucide-react";
+import { useState } from "react";
+import { Phone, Check, Repeat, X, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 
 export default function ConsultationRow({ c, onCheckIn, onCheckOut, onPostpone, onCancel, accent = "#0ea5e9" }) {
+  const [loadingCheckIn, setLoadingCheckIn] = useState(false);
+  const [loadingCheckOut, setLoadingCheckOut] = useState(false);
   // small color bar per status
   const barColor = c.status === "checked_in" ? "bg-emerald-400"
     : c.status === "checked_out" ? "bg-slate-300"
@@ -36,25 +39,59 @@ export default function ConsultationRow({ c, onCheckIn, onCheckOut, onPostpone, 
           <span className="text-sm text-slate-700">{c.patient.phone}</span>
         </a>
 
-        {c.status !== "checked_in" && c.status !== "checked_out" && (
-          <button onClick={onCheckIn} className="px-3 py-1 rounded-md text-white text-sm font-medium hover:brightness-95 transition cursor-pointer" style={{ background: accent }}>
-            <Check className="inline-block w-4 h-4 mr-1" /> Check-in
+        {c.statusConsultation !== "encours" && c.statusConsultation !== "termine"  && (<>
+          <button
+            onClick={async () => {
+              if (!onCheckIn) return;
+              try {
+                setLoadingCheckIn(true);
+                await onCheckIn();
+              } finally {
+                setLoadingCheckIn(false);
+              }
+            }}
+            disabled={loadingCheckIn}
+            className={`px-3 py-1 flex flex-row justify-center items-center rounded-md text-white text-sm font-medium transition ${loadingCheckIn ? 'opacity-60 cursor-not-allowed' : 'hover:brightness-95 cursor-pointer'}`}
+            style={{ background: accent }}
+          >
+            {loadingCheckIn ? <Loader2 className="inline-block w-4 h-4 animate-spin" /> : <><Check className="inline-block w-4 h-4 mr-1" /> Check-in</>}
           </button>
+
+            {/* Boutons */}
+          <button onClick={onPostpone} title="Reporter" className="p-2 rounded-md bg-white border border-slate-100 hover:shadow-sm transition cursor-pointer">
+            <Repeat className="w-4 h-4 text-slate-600" />
+          </button>
+          <button onClick={onCancel} title="Annuler" className="p-2 rounded-md bg-white border border-slate-100 hover:bg-rose-50 hover:shadow-sm transition cursor-pointer">
+            <X className="w-4 h-4 text-rose-600" />
+          </button>
+        </>
         )}
 
-        {c.status === "checked_in" && (
-          <button onClick={onCheckOut} className="px-3 py-1 rounded-md text-white text-sm font-medium hover:brightness-95 transition cursor-pointer" style={{ background: "#10b981" }}>
-            <Check className="inline-block w-4 h-4 mr-1" /> Check-out
-          </button>
+        {c.statusConsultation === "encours" && (
+          <>
+            <button
+              onClick={async () => {
+                if (!onCheckOut) return;
+                try {
+                  setLoadingCheckOut(true);
+                  await onCheckOut();
+                } finally {
+                  setLoadingCheckOut(false);
+                }
+              }}
+              disabled={loadingCheckOut}
+              title="Check-out"
+              className={`px-3 py-1 flex flex-row justify-center items-center rounded-md text-white text-sm font-medium bg-emerald-500 transition ${loadingCheckOut ? 'opacity-60 cursor-not-allowed' : 'hover:brightness-95 cursor-pointer'}`}
+            >
+              {loadingCheckOut ? <Loader2 className="inline-block w-4 h-4 animate-spin" /> : <><Check className="inline-block w-4 h-4 mr-1" /> Check-out</>}
+            </button>
+            <span className="px-3 py-1 rounded-md text-white text-sm font-medium bg-sky-200">En cours</span>
+
+          </>
+
         )}
 
-        {/* Boutons */}
-        <button onClick={onPostpone} title="Reporter" className="p-2 rounded-md bg-white border border-slate-100 hover:shadow-sm transition cursor-pointer">
-          <Repeat className="w-4 h-4 text-slate-600" />
-        </button>
-        <button onClick={onCancel} title="Annuler" className="p-2 rounded-md bg-white border border-slate-100 hover:bg-rose-50 hover:shadow-sm transition cursor-pointer">
-          <X className="w-4 h-4 text-rose-600" />
-        </button>
+ 
       </div>
     </div>
   );

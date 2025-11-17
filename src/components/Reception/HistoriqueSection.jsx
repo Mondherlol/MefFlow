@@ -1,13 +1,14 @@
 import { CheckCircle, ClockIcon, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const getStatusText = (status) => {
     if (!status) return "—";
     switch (status.toLowerCase()) {
         case "confirme":
             return "Confirmé";
-        case "terminer":
+        case "termine":
             return "Terminé";
-        case "en_cours":
+        case "encours":
             return "En cours";
         case "annuler":
             return "Annulé";
@@ -51,10 +52,10 @@ function HistoriqueSection({ pastToday, onCancel, onPostpone }) {
                 const status = (c.statusConsultation || "").toLowerCase();
                 let badgeColor = "bg-slate-100 text-slate-700";
                 let StatusIcon = ClockIcon;
-                if (status === "terminer") {
+                if (status === "termine") {
                   badgeColor = "bg-emerald-50 text-emerald-700";
                   StatusIcon = CheckCircle;
-                } else if (status === "en_cours") {
+                } else if (status === "encours") {
                   badgeColor = "bg-sky-50 text-sky-700";
                   StatusIcon = CheckCircle;
                 } else if (status === "annuler") {
@@ -67,7 +68,7 @@ function HistoriqueSection({ pastToday, onCancel, onPostpone }) {
                 return (
                   <div key={`${c.id || c._tempId || Math.random()}`} className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:shadow-sm bg-white">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex-shrink-0">
+                      <Link to={`/reception/patients/${c.patient?.id }`} className="flex-shrink-0">
                         {avatar ? (
                           <img src={avatar} alt={patientName} className="w-10 h-10 rounded-full object-cover" />
                         ) : (
@@ -75,7 +76,7 @@ function HistoriqueSection({ pastToday, onCancel, onPostpone }) {
                             {initials || "—"}
                           </div>
                         )}
-                      </div>
+                      </Link>
 
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-slate-900 truncate">{pseudo}</div>

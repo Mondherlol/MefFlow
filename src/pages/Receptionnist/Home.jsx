@@ -33,6 +33,7 @@ export default function ReceptionnistHome() {
   const [loadingConsultations, setLoadingConsultations] = useState(false);
   const [upcoming, setUpcoming] = useState([]);
   const [nowConsultations, setNowConsultations] = useState([]);
+  const [pastToday, setPastToday] = useState([]);
 
   // stats / notifications 
   const stats = {
@@ -51,27 +52,6 @@ export default function ReceptionnistHome() {
       // store full consultations for later use (history, detailed lists)
       setConsultations(data || []);
 
-      // Mettre dans now celles dans environ 1H Max
-      const now = new Date();
-      const filtered = data.filter(c => {
-        const heureDebut = c.heure_debut;
-        const consultTime = new Date(`${c.date}T${heureDebut}`);
-        const diffMinutes = (consultTime - now) / 60000;
-        return diffMinutes >= -30 && diffMinutes <= 60;
-      });
-      setNowConsultations(filtered);    
-
-      // Mettre ceux à venir dans upcoming — exclure ceux déjà listés dans `nowConsultations`
-      const nowIds = new Set(filtered.map(n => n.id).filter(Boolean));
-      const upcomingFiltered = data.filter(c => {
-        const heureDebut = c.heure_debut;
-        const consultTime = new Date(`${c.date}T${heureDebut}`);
-        if (!(consultTime > now)) return false;
-        if (c.id && nowIds.has(c.id)) return false;
-        return true;
-      });
-      setUpcoming(upcomingFiltered);
-
     } catch (err) {
       console.error(err);
       toast.error("Impossible de charger les consultations du jour");
@@ -86,45 +66,108 @@ export default function ReceptionnistHome() {
     }
   }, [clinic?.id]);
 
+  // Mettre à jour les listes dérivées lorsque `consultations` change
+  useEffect(() => {
+    console.log(" Liste des consultations mise à jour :", consultations);
+      // Mettre dans now celles dans environ 1H Max
+      const now = new Date();
+      const filtered = consultations.filter(c => {
+        const heureDebut = c.heure_debut;
+        const consultTime = new Date(`${c.date}T${heureDebut}`);
+        const diffMinutes = (consultTime - now) / 60000;
+        return (diffMinutes >= -30 && diffMinutes <= 60) && (c.statusConsultation == "confirme" || c.statusConsultation == "encours");
+      });
+      setNowConsultations(filtered);    
+
+            // Mettre ceux passés aujourd'hui dans pastToday
+      const pastTodayFiltered = consultations
+        .filter(c => {
+          const t = c.heure_debut || "00:00";
+          const ct = new Date(`${c.date}T${t}`);
+          return ct < now || (c.statusConsultation === "termine" || c.statusConsultation === "annuler");
+        })
+        .sort((a,b) => {
+          const ta = new Date(`${a.date}T${a.heure_debut || "00:00"}`).getTime();
+          const tb = new Date(`${b.date}T${b.heure_debut || "00:00"}`).getTime();
+          return tb - ta; // most recent first
+        });
+      setPastToday(pastTodayFiltered);
+
+      // Mettre ceux à venir dans upcoming — exclure ceux déjà listés dans `nowConsultations`
+      const nowIds = new Set(filtered.map(n => n.id).filter(Boolean));
+      const upcomingFiltered = consultations.filter(c => {
+        const heureDebut = c.heure_debut;
+        const consultTime = new Date(`${c.date}T${heureDebut}`);
+        if (!(consultTime > now)) return false;
+        if (c.id && nowIds.has(c.id)) return false;
+        if( c.statusConsultation !== "confirme") return false;
+        return true;
+      });
+      setUpcoming(upcomingFiltered);
+
+
+  }, [consultations]);
+
 
   // Helpers
   const updateConsultation = (id, patch) => {
     setConsultations(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
   };
 
-  // Derived lists for today's timeline
-  const todayYMD = new Date().toISOString().slice(0,10);
-  const now = new Date();
-  const pastToday = consultations
-    .filter(c => c && c.date === todayYMD)
-    .filter(c => {
-      const t = c.heure_debut || c.start || c.time || "00:00";
-      const ct = new Date(`${c.date}T${t}`);
-      return ct < now;
-    })
-    .sort((a,b) => {
-      const ta = new Date(`${a.date}T${a.heure_debut || a.start || a.time || "00:00"}`).getTime();
-      const tb = new Date(`${b.date}T${b.heure_debut || b.start || b.time || "00:00"}`).getTime();
-      return tb - ta; // most recent first
-    });
 
-  const handleCheckIn = (id) => {
-    updateConsultation(id, { status: "checked_in", checkedInAt: new Date().toISOString() });
-    toast.success("Patient enregistré (check-in)");
+
+  const handleCheckIn = async (id) => {
+    // Optimistic update: set local state immediately, revert if API fails
+    const prev = consultations.find(c => c.id === id) || {};
+    const prevStatusConsult = prev.statusConsultation;
+    const prevStatus = prev.status;
+    updateConsultation(id, { statusConsultation: "encours", status: "checked_in" });
+    try {
+      await api.patch(`/api/consultations/${id}/check-in/`);
+      toast.success("Check-in effectué");
+    } catch (error) {
+      console.error(error);
+      // revert
+      updateConsultation(id, { statusConsultation: prevStatusConsult, status: prevStatus });
+      toast.error("Erreur lors du check-in");
+    }
+  
   };
 
-  const handleCheckOut = (id) => {
-    const ok = window.confirm("Marquer comme check-out (fin de visite) ?");
-    if (!ok) return;
-    updateConsultation(id, { status: "checked_out", checkedOutAt: new Date().toISOString() });
-    toast.success("Check-out effectué");
+  const handleCheckOut = async (id) => {
+    // Optimistic update: mark as finished locally immediately
+    const prev = consultations.find(c => c.id === id) || {};
+    const prevStatusConsult = prev.statusConsultation;
+    const prevStatus = prev.status;
+    updateConsultation(id, { statusConsultation: "termine", status: "checked_out" });
+    try {
+      await api.patch(`/api/consultations/${id}/check-out/`);
+      toast.success("Check-out effectué");
+    } catch (error) {
+      console.error(error);
+      // revert
+      updateConsultation(id, { statusConsultation: prevStatusConsult, status: prevStatus });
+      toast.error("Erreur lors du check-out");
+    }
   };
 
-  const handleCancel = (id) => {
+  const handleCancel = async (id) => {
     const ok = window.confirm("Annuler le rendez-vous ? Cette action peut être annulée manuellement.");
     if (!ok) return;
-    updateConsultation(id, { status: "cancelled" });
+    const prev = consultations.find(c => c.id === id) || {};
+    const prevStatusConsult = prev.statusConsultation;
+    const prevStatus = prev.status;
+    // optimistic
+    updateConsultation(id, { statusConsultation: "annuler", status: "cancelled" });
     toast("Rendez-vous annulé", { icon: "⚠️" });
+    try {
+      await api.patch(`/api/consultations/${id}/cancel/`);
+    } catch (err) {
+      console.error(err);
+      // revert on failure
+      updateConsultation(id, { statusConsultation: prevStatusConsult, status: prevStatus });
+      toast.error("Erreur lors de l'annulation");
+    }
   };
 
   const handlePostpone = (id) => {
@@ -135,9 +178,11 @@ export default function ReceptionnistHome() {
     if (isNaN(minutes) || minutes <= 0) return toast.error("Valeur invalide");
     setConsultations(prev => prev.map(c => {
       if (c.id !== id) return c;
-      const newTime = new Date(new Date(c.time).getTime() + minutes * 60000);
+      // compute new time conservatively using heure_debut if available
+      const base = c.time ? new Date(c.time) : new Date(`${c.date}T${c.heure_debut || '00:00'}`);
+      const newTime = new Date(base.getTime() + minutes * 60000);
       toast.success(`Rendez-vous reporté de ${minutes} min → ${newTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`);
-      return { ...c, time: newTime.toISOString(), status: "scheduled" };
+      return { ...c, time: newTime.toISOString(), statusConsultation: "confirme", status: "scheduled" };
     }));
   };
 
@@ -251,8 +296,6 @@ export default function ReceptionnistHome() {
                 <ConsultationRow
                   key={c.id}
                   c={c}
-                  onCheckIn={() => handleCheckIn(c.id)}
-                  onCheckOut={() => handleCheckOut(c.id)}
                   onPostpone={() => handlePostpone(c.id)}
                   onCancel={() => handleCancel(c.id)}
                   accent={primaryColor}
