@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { RotateCw, ChevronUp, ChevronDown, ArrowRight, CalendarSync } from "lucide-react";
 import { getImageUrl } from "../../../utils/image.jsx";
 
@@ -12,6 +12,10 @@ export default function ModificationsPanel({
   const items = useMemo(() => Object.values(modified || {}), [modified]);
   const [open, setOpen] = useState(true);
 
+  useEffect(() => {
+    console.log("ModificationsPanel items:", items);
+  }, [items]);
+
   if (!items.length) return null;
 
   const toggleOpen = () => setOpen((v) => !v);
@@ -24,18 +28,70 @@ export default function ModificationsPanel({
 
   // ----- Helpers pour formatage des dates en français -----
   const parseDateTime = (input) => {
-    if (!input) return null;
+    if (input === undefined || input === null) return null;
     if (input instanceof Date) return input;
-    let s = String(input).trim();
-    // support "YYYY-MM-DD HH:MM" -> "YYYY-MM-DDTHH:MM" (ISO-like)
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) s = s.replace(" ", "T");
-    const d = new Date(s);
-    return Number.isNaN(d.getTime()) ? null : d;
+    if (typeof input === "number") {
+      const ms = input > 1e12 ? input : input * 1000;
+      const dNum = new Date(ms);
+      return Number.isNaN(dNum.getTime()) ? null : dNum;
+    }
+
+    const s = String(input).trim();
+
+    // time-only: "HH:MM" or "H:MM:SS"
+    const timeOnly = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (timeOnly) {
+      const hh = parseInt(timeOnly[1], 10);
+      const mm = parseInt(timeOnly[2], 10);
+      const ss = timeOnly[3] ? parseInt(timeOnly[3], 10) : 0;
+      const d = new Date();
+      d.setHours(hh, mm, ss, 0);
+      return d;
+    }
+
+    // date or date+time: YYYY-MM-DD or YYYY-MM-DD HH:MM[:SS] or with T
+    const dt = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (dt) {
+      const y = parseInt(dt[1], 10);
+      const mo = parseInt(dt[2], 10) - 1;
+      const day = parseInt(dt[3], 10);
+      const hh = dt[4] ? parseInt(dt[4], 10) : 0;
+      const mm = dt[5] ? parseInt(dt[5], 10) : 0;
+      const ss = dt[6] ? parseInt(dt[6], 10) : 0;
+      const d = new Date(y, mo, day, hh, mm, ss, 0);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+
+    // fallback to Date constructor for other formats
+    const fallback = new Date(s);
+    return Number.isNaN(fallback.getTime()) ? null : fallback;
   };
 
   const capitalize = (str) => (str ? str.charAt(0).toUpperCase() + str.slice(1) : "");
 
   const formatDateParts = (raw) => {
+    if (raw === undefined || raw === null || raw === "") return { dateLabel: "—", timeLabel: "" };
+
+    const s = String(raw).trim();
+    // If input is time-only (HH:MM), return a neutral date label and the time as-is
+    const timeOnly = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+    if (timeOnly) {
+      const hh = String(parseInt(timeOnly[1], 10)).padStart(2, "0");
+      const mm = timeOnly[2];
+      return { dateLabel: "—", timeLabel: `${hh}:${mm}` };
+    }
+
+    // If input is date-only like YYYY-MM-DD, show date and hide time to avoid timezone shifts
+    const dateOnly = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnly) {
+      const y = parseInt(dateOnly[1], 10);
+      const mo = parseInt(dateOnly[2], 10) - 1;
+      const day = parseInt(dateOnly[3], 10);
+      const dOnly = new Date(y, mo, day, 0, 0, 0, 0);
+      const dateFmtOnly = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+      return { dateLabel: capitalize(dateFmtOnly.format(dOnly)), timeLabel: "" };
+    }
+
     const d = parseDateTime(raw);
     if (!d) return { dateLabel: "—", timeLabel: "" };
 
@@ -117,8 +173,18 @@ export default function ModificationsPanel({
                 m.original?.patient?.full_name ||
                 m.modified?.patient?.full_name ||
                 `RDV #${m.modified?.id ?? m.id ?? "?"}`;
-              const origRaw = m.original?.date || m.original?.jour || [m.original?.start, m.original?.start_time].filter(Boolean).join(" ") || m.original?.heure_debut || "";
-              const modRaw = m.modified?.date || m.modified?.jour || [m.modified?.start, m.modified?.start_time].filter(Boolean).join(" ") || m.modified?.heure_debut || "";
+
+              const getRaw = (obj) => {
+                if (!obj) return "";
+                // Prefer a combined date + start time when both exist to avoid parsing a date-only string
+                const date = obj.date;
+                const time = obj.heure_debut || obj.start || obj.start_time;
+                if (date && time) return `${date} ${time}`;
+                return date || [obj.start, obj.start_time].filter(Boolean).join(" ") || obj.heure_debut || "";
+              };
+
+              const origRaw = getRaw(m.original);
+              const modRaw = getRaw(m.modified);
 
               const orig = formatDateParts(origRaw);
               const mod = formatDateParts(modRaw);

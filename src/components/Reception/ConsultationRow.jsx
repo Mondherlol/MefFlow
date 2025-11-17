@@ -1,13 +1,8 @@
-// components/Reception/ConsultationRow.jsx
-import React from "react";
-import { Phone, Clock, Check, Repeat, X } from "lucide-react";
+import { Phone, Check, Repeat, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 
 export default function ConsultationRow({ c, onCheckIn, onCheckOut, onPostpone, onCancel, accent = "#0ea5e9" }) {
-  const time = new Date(c.time);
-  const hh = time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
   // small color bar per status
   const barColor = c.status === "checked_in" ? "bg-emerald-400"
     : c.status === "checked_out" ? "bg-slate-300"
@@ -26,8 +21,10 @@ export default function ConsultationRow({ c, onCheckIn, onCheckOut, onPostpone, 
             {initials}
           </div>
           <div className="min-w-0">
-            <Link to={`/reception/patients/69176d2bc91280fc5c276e05`} className="text-sm font-medium truncate">{c.patient.name}</Link>
-            <div className="text-xs text-slate-500 truncate">{c.doctor} • <span className="font-medium">{hh}</span></div>
+            <Link to={`/reception/patients/${c.patient.id}`} className="text-sm font-medium truncate">{c.patient.full_name}</Link>
+            <div className="text-xs text-slate-500 truncate">
+             <Link to={`/reception/emploi/${c.doctor.id}`} className="text-xs hover:underline text-slate-500 truncate">{c.doctor.full_name}</Link>  
+             {" "} • <span className="font-medium">{c.heure_debut}</span></div>
           </div>
         </div>
       </div>

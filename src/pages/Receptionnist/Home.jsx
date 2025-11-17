@@ -1,11 +1,14 @@
 // ReceptionnistHome.jsx
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Users,
   CalendarDays,
   PlusCircle,
-  Bell
+  Bell,
+  CheckCircle,
+  XCircle,
+  Clock as ClockIcon
 } from "lucide-react";
 import SearchBar from "../../components/Reception/SearchBar";
 import { useClinic } from "../../context/clinicContext";
@@ -13,73 +16,93 @@ import { useAuth } from "../../context/authContext";
 import ActionTile from "../../components/Reception/ActionTile";
 import ConsultationRow from "../../components/Reception/ConsultationRow";
 import toast from "react-hot-toast";
+import api from "../../api/axios";
 
-/**
- * Page d'accueil réceptionniste : amélioration visuelle + actions
- *
- * Remarques :
- * - Cette version utilise un mock de rendez-vous (comme ton exemple).
- * - Les handlers (checkIn / checkOut / postpone / cancel) mettent à jour l'état local et affichent des toasts.
- * - Intègre badge "demandes" dans ActionTile.
- */
 
 export default function ReceptionnistHome() {
   const navigate = useNavigate();
-  const { clinic } = useClinic() || {};
+  const { clinic, theme } = useClinic() || {};
   const { user } = useAuth() || {};
 
-  
-
   // theme colors (si ta clinic fournit hex, utilise les — sinon fallback)
-  const primaryColor = clinic?.theme?.primaryColor || "#0ea5e9";
-  const accentColor = clinic?.theme?.secondaryColor || "#6366f1";
+  const primaryColor = theme.primaryColor;
+  const accentColor = theme.accentColor;
 
-  // sample data enrichi (patient contact + status)
-  const now = useMemo(() => new Date(), []);
-  const initConsultations = useMemo(() => ([
-    {
-      id: 1,
-      patient: { name: "Marie Dupont", phone: "+216 55 123 456", email: "marie.dupont@example.com" },
-      doctor: "Dr. Martin",
-      time: new Date(now.getTime() - 10 * 60000).toISOString(),
-      status: "scheduled" // scheduled | checked_in | checked_out | cancelled
-    },
-    {
-      id: 2,
-      patient: { name: "Ali Ben", phone: "+216 98 222 333", email: "ali.ben@example.com" },
-      doctor: "Dr. Durand",
-      time: new Date(now.getTime() + 20 * 60000).toISOString(),
-      status: "scheduled"
-    },
-    {
-      id: 3,
-      patient: { name: "Sophie Legrand", phone: "+216 22 444 555", email: "sophie.legrand@example.com" },
-      doctor: "Dr. Martin",
-      time: new Date(now.getTime() + 90 * 60000).toISOString(),
-      status: "scheduled"
-    },
-    {
-      id: 4,
-      patient: { name: "Pauline Moreau", phone: "+216 77 888 999", email: "pauline.moreau@example.com" },
-      doctor: "Dr. Bernard",
-      time: new Date(now.getTime() + 150 * 60000).toISOString(),
-      status: "scheduled"
-    }
-  ]), [now]);
+  const [consultations, setConsultations] = useState([]);
+  const [loadingConsultations, setLoadingConsultations] = useState(false);
+  const [upcoming, setUpcoming] = useState([]);
+  const [nowConsultations, setNowConsultations] = useState([]);
 
-  const [consultations, setConsultations] = useState(initConsultations);
-
-  // stats / notifications (remplace par tes vrais appels API)
+  // stats / notifications 
   const stats = {
     patients: 1245,
-    requests: 12, // nombre de demandes en attente -> badge
+    requests: 12, // nombre de demandes en attente
     doctors: 18,
   };
+
+  async function fetchConsultations() {
+    try {
+      setLoadingConsultations(true);
+      const res = await api.get(`/api/consultations/?clinic_id=${clinic.id}&date=${new Date().toISOString().slice(0,10)}`);
+      const data = res.data?.data || res.data || null;
+      console.log("Consultations chargées :", data);
+
+      // store full consultations for later use (history, detailed lists)
+      setConsultations(data || []);
+
+      // Mettre dans now celles dans environ 1H Max
+      const now = new Date();
+      const filtered = data.filter(c => {
+        const heureDebut = c.heure_debut;
+        const consultTime = new Date(`${c.date}T${heureDebut}`);
+        const diffMinutes = (consultTime - now) / 60000;
+        return diffMinutes >= -30 && diffMinutes <= 60;
+      });
+      setNowConsultations(filtered);
+
+      // Mettre ceux à venir dans upcoming
+      const upcomingFiltered = data.filter(c => {
+        const heureDebut = c.heure_debut;
+        const consultTime = new Date(`${c.date}T${heureDebut}`);
+        return consultTime > now;
+      });
+      setUpcoming(upcomingFiltered);
+
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible de charger les consultations du jour");
+    } finally {
+      setLoadingConsultations(false);
+    }
+  }
+
+  useEffect(() => {
+    if (clinic?.id) {
+      fetchConsultations();
+    }
+  }, [clinic?.id]);
+
 
   // Helpers
   const updateConsultation = (id, patch) => {
     setConsultations(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c));
   };
+
+  // Derived lists for today's timeline
+  const todayYMD = new Date().toISOString().slice(0,10);
+  const now = new Date();
+  const pastToday = consultations
+    .filter(c => c && c.date === todayYMD)
+    .filter(c => {
+      const t = c.heure_debut || c.start || c.time || "00:00";
+      const ct = new Date(`${c.date}T${t}`);
+      return ct < now;
+    })
+    .sort((a,b) => {
+      const ta = new Date(`${a.date}T${a.heure_debut || a.start || a.time || "00:00"}`).getTime();
+      const tb = new Date(`${b.date}T${b.heure_debut || b.start || b.time || "00:00"}`).getTime();
+      return tb - ta; // most recent first
+    });
 
   const handleCheckIn = (id) => {
     updateConsultation(id, { status: "checked_in", checkedInAt: new Date().toISOString() });
@@ -113,21 +136,6 @@ export default function ReceptionnistHome() {
       return { ...c, time: newTime.toISOString(), status: "scheduled" };
     }));
   };
-
-  // search
-  function onSearch(e) {
-    e?.preventDefault?.();
-    const q = (query || "").trim();
-    if (!q) return navigate('/reception/search');
-    navigate(`/reception/search?q=${encodeURIComponent(q)}`);
-  }
-
-  // split lists for "now" and "upcoming"
-  const withinNow = (t) => Math.abs(new Date(t) - now) <= 30 * 60000;
-  const nowConsultations = consultations.filter(c => withinNow(c.time) && c.status !== "cancelled");
-  const upcoming = consultations
-    .filter(c => new Date(c.time) > now && c.status !== "cancelled")
-    .sort((a,b)=> new Date(a.time) - new Date(b.time));
 
   return (
     <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/60 p-6 md:p-10">
@@ -223,14 +231,14 @@ export default function ReceptionnistHome() {
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-slate-500">Aucun rendez-vous dans l'intervalle de ±30 minutes.</div>
+              <div className="text-sm text-slate-500">Aucun rendez-vous dans l'intervalle de ± 1 heure.</div>
             )}
           </div>
 
           {/* UPCOMING */}
           <div className="bg-white rounded-2xl p-4 shadow-sm hover:shadow-lg transition-border duration-150 border border-slate-50">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold">Prochains rendez-vous</h2>
+              <h2 className="text-sm font-semibold">Prochains rendez-vous de la journée</h2>
               <Link to="/reception/consultations" className="text-xs font-medium text-slate-600">Voir la journée</Link>
             </div>
 
@@ -251,7 +259,6 @@ export default function ReceptionnistHome() {
           </div>
         </section>
 
-        <footer className="mt-4 text-sm text-slate-500">Interface de démonstration — connecte tes données réelles pour rendre les actions effectives.</footer>
       </div>
     </div>
   );

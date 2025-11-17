@@ -31,6 +31,10 @@ export default function PlanningMedecin() {
   const [selectedConsultation, setSelectedConsultation] = useState(null);
 
   useEffect(() => {
+    console.log("Modified consultations:", modified);
+  }, [modified]);
+
+  useEffect(() => {
     if (!id) return;
     fetchDoctor();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,15 +84,37 @@ export default function PlanningMedecin() {
       const formatedEnd = formatDateYMD(new Date(endDate));
       const res = await api.get(`/api/consultations/by-doctor/?doctor=${doctorId}&week_start=${formatedStart}&week_end=${formatedEnd}&perPage=200`);
       const fetched = res.data?.data || res.data || [];
-
       // overlay any local modifications so they persist across week changes
-      if (Object.keys(modified || {}).length > 0) {
-        const byId = { ...modified };
-        const merged = fetched.map((c) => {
+      // and also include locally-moved consultations whose modified.date
+      // falls inside the requested range but which the server doesn't
+      // return (because the change hasn't been saved server-side yet).
+      const byId = { ...(modified || {}) };
+      if (Object.keys(byId).length > 0) {
+        // first, overlay modifications for items returned by the server
+        let merged = fetched.map((c) => {
           const m = byId[c.id] || byId[String(c.id)];
           if (!m) return c;
           return { ...c, ...m.modified };
         });
+
+        // then, inject modified entries that now belong to this week
+        const startYMD = formatDateYMD(new Date(startDate));
+        const endYMD = formatDateYMD(new Date(endDate));
+
+        Object.values(byId).forEach((entry) => {
+          const mod = entry.modified;
+          if (!mod) return;
+          const modDateRaw = mod.date || mod.start || mod.date;
+          if (!modDateRaw) return;
+          const modYMD = formatDateYMD(new Date(modDateRaw));
+          if (modYMD >= startYMD && modYMD <= endYMD) {
+            const exists = merged.some((c) => String(c.id) === String(mod.id));
+            if (!exists) {
+              merged.push({ ...mod });
+            }
+          }
+        });
+
         setConsultations(merged);
       } else {
         setConsultations(fetched);
@@ -205,6 +231,20 @@ export default function PlanningMedecin() {
   }
 
   function handleCancelEdits() {
+    // Revert any local modifications stored in `modified` back into the
+    // `consultations` state so the visible calendar shows the original
+    // server values for the current week when the user cancels editing.
+    setConsultations((prev) => {
+      const byId = { ...(modified || {}) };
+      if (Object.keys(byId).length === 0) return prev;
+
+      return prev.map((c) => {
+        const key = c.id || String(c.id);
+        const entry = byId[c.id] || byId[key];
+        return entry ? { ...entry.original } : c;
+      });
+    });
+
     setModified({});
     setEditMode(false);
   }
@@ -266,7 +306,7 @@ export default function PlanningMedecin() {
       if (e.modified.date && e.original && e.modified.date !== e.original.date) payload.date = e.modified.date;
       if (e.modified.start && e.original && e.modified.start !== e.original.start) payload.start = e.modified.start;
       if (e.modified.heure_debut && e.original && e.modified.heure_debut !== e.original.heure_debut) payload.heure_debut = e.modified.heure_debut;
-      if (e.modified.heure_fin && e.original && e.modified.heure_fin !== e.original.heure_fin) payload.heure_fin = e.modified.heure_fin;
+      // if (e.modified.heure_fin && e.original && e.modified.heure_fin !== e.original.heure_fin) payload.heure_fin = e.modified.heure_fin;
       // include other fields if needed
 
       if (Object.keys(payload).length === 0) return Promise.resolve(null);
@@ -282,9 +322,9 @@ export default function PlanningMedecin() {
       await toast.promise(
         saveSettings(),
         {
-          loading: "Saving...",
-          success: <b>Settings saved!</b>,
-          error: <b>Could not save.</b>,
+          loading: "Sauvegarde...",
+          success: <b>Consultations modifiées avec succès !</b>,
+          error: <b>Impossible de sauvegarder.</b>,
         }
       );
 
@@ -309,10 +349,11 @@ export default function PlanningMedecin() {
 
   return (
     <ReceptionistTemplate
-      title={doctor ? `Emploi — ${doctor.user?.full_name || "Médecin"}` : "Emploi du médecin"}
+      title={doctor ? `Planning — ${doctor.user?.full_name || "Médecin"}` : "Planning du médecin"}
       breadcrumbs={[
         { label: "Accueil réception", to: "/reception" },
-        { label: "Emploi du médecin", current: true },
+        { label : "Médecins", to: "/reception/doctors" },
+        { label: `Planning — ${doctor?.user?.full_name || "Médecin"}`, current: true },
       ]}
     >
       <div className="space-y-6 relative">
