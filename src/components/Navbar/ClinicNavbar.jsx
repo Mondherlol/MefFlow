@@ -52,6 +52,7 @@ export default function ClinicNavbar() {
     const receptionnistLinks = [
         { label: "Tableau de bord", path: "/reception", icon: null},
         { label: "Médecins", path: "/reception/doctors", icon: null},
+        { label: "Consultations", path: "/reception/consultations", icon: null},
     ];
 
     const isClinicHome = loc.pathname.toLowerCase().includes("home");

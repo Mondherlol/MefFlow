@@ -76,7 +76,7 @@ export default function ConsultationCard({ consultation: c, onCancel, onPostpone
         {status === "confirme" && (
           <>
             <button
-              onClick={() => onPostpone && onPostpone(c)}
+              onClick={() => onPostpone && onPostpone(c.id)}
               disabled={!onPostpone}
               className="inline-flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 shadow-sm border border-transparent"
             >
@@ -85,7 +85,7 @@ export default function ConsultationCard({ consultation: c, onCancel, onPostpone
             </button>
 
             <button
-              onClick={() => onCancel && onCancel(c)}
+              onClick={() => onCancel && onCancel(c.id)}
               disabled={!onCancel || loadingAction === `cancel-${c.id}`}
               className="inline-flex items-center gap-2 px-2 py-1 text-xs font-medium rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 shadow-sm border border-transparent"
             >

@@ -306,8 +306,7 @@ export default function PlanningMedecin() {
       if (e.modified.date && e.original && e.modified.date !== e.original.date) payload.date = e.modified.date;
       if (e.modified.start && e.original && e.modified.start !== e.original.start) payload.start = e.modified.start;
       if (e.modified.heure_debut && e.original && e.modified.heure_debut !== e.original.heure_debut) payload.heure_debut = e.modified.heure_debut;
-      // if (e.modified.heure_fin && e.original && e.modified.heure_fin !== e.original.heure_fin) payload.heure_fin = e.modified.heure_fin;
-      // include other fields if needed
+      if (e.modified.heure_fin && e.original && e.modified.heure_fin !== e.original.heure_fin) payload.heure_fin = e.modified.heure_fin;
 
       if (Object.keys(payload).length === 0) return Promise.resolve(null);
 

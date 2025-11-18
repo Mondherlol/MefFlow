@@ -63,6 +63,7 @@ import { useAuth } from "./context/authContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ClinicRoute from "./components/ClinicRoute";
 import { Toaster } from "react-hot-toast";
+import BodyModel3D from "./pages/BodyModel";
 
 export default function App() {
   const onRoot = !tenant; // root domain or localhost
@@ -88,6 +89,7 @@ export default function App() {
     { path: "/contact", component: Contact, clinicRoute: true },
     { path: "/login", component: Login, clinicRoute: true },
     { path: "/signup", component: SignUp, clinicRoute: true },
+    { path: "/body", component: BodyModel3D, clinicRoute: true },
   ];
 
   const adminRoutes = [

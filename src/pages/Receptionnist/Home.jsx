@@ -128,10 +128,7 @@ export default function ReceptionnistHome() {
       const data = res?.data?.data || res?.data || null;
       if (data) {
         updateConsultation(id, data);
-      } else {
-        // fallback: update common fields if server doesn't return full object
-        updateConsultation(id, { statusConsultation: "encours", status: "checked_in" });
-      }
+      } 
       toast.success("Check-in effectué");
     } catch (error) {
       console.error(error);
@@ -149,8 +146,6 @@ export default function ReceptionnistHome() {
       const data = res?.data?.data || res?.data || null;
       if (data) {
         updateConsultation(id, data);
-      } else {
-        updateConsultation(id, { statusConsultation: "termine", status: "checked_out" });
       }
       toast.success("Check-out effectué");
     } catch (error) {

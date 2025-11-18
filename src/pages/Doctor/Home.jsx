@@ -163,72 +163,11 @@ function TimelineCompact({ events = [], start = 8, end = 18, step = 30, onSelect
   );
 }
 
-/* Panel unique qui montre détails du créneau / RDV sélectionné */
-function SlotDetail({ time, eventsAtTime = [], onPostpone, onCancel }) {
-  const navigate = useNavigate();
-  return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 h-[72vh] overflow-auto">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div className="text-sm font-semibold">Détails du créneau</div>
-          <div className="text-xs text-slate-400">Heure sélectionnée : {time || "—"}</div>
-        </div>
-      </div>
-
-      {!time && <div className="text-slate-500">Sélectionne un créneau dans la timeline à gauche.</div>}
-
-      {time && (
-        <div className="space-y-3">
-          {eventsAtTime.length === 0 && (
-            <div className="text-sm text-slate-500">Aucun RDV sur ce créneau.</div>
-          )}
-
-          {eventsAtTime.map((ev) => (
-            <div key={ev.id} className="bg-white p-3 rounded-lg border border-slate-50 shadow-sm hover:shadow-md transition">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 font-semibold">{(ev.patient || "").split(' ').map(s=>s[0]).slice(0,2).join('')}</div>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-slate-900 truncate">{ev.patient}</div>
-                    <div className="text-xs text-slate-400">Durée: {ev.duration} min • Statut: {ev.status}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => onPostpone(ev.id)}
-                    className="text-xs px-3 py-1 rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
-                  >
-                    <Pause size={14} /> Reporter
-                  </button>
-
-                  <button
-                    onClick={() => navigate('/consultation', { state: { patientName: ev.patient, patientId: ev.patientId ?? ev.id } })}
-                    className="text-xs px-3 py-1 rounded-md bg-white border text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    Voir dossier médical
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-3 text-xs text-slate-500">Notes rapides (non persistées dans le mock)</div>
-              <textarea className="w-full mt-2 rounded-md border px-3 py-2" rows={3} placeholder="Résumé..." />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ---------- Page principale ---------- */
 export default function Home() {
   const { user } = useAuth() || { user: { name: "Dr. Exemple", doctor: { user: { full_name: "Dr Exemple" } } } };
-  const { clinic } = useClinic() || {};
   const navigate = useNavigate();
-  // theme colors (fallbacks)
-  const primaryColor = clinic?.theme?.primaryColor || "#0ea5e9";
-  const accentColor = clinic?.theme?.secondaryColor || "#6366f1";
   const [showNow, setShowNow] = useState(false);
 
   // state events (mock) — remplace par fetch API dans useEffect si besoin
