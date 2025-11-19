@@ -11,6 +11,7 @@ function FBXHuman({
   onPointerOverCallback,
   onPointerMoveCallback,
   onPointerOutCallback,
+  onMeshesReady,
 }) {
   const fbx = useFBX(HumanBody);
   const groupRef = useRef();
@@ -39,6 +40,8 @@ function FBXHuman({
     });
 
     setMeshes(found);
+    // informer le parent que les meshes sont prêts (pour centrage / focus)
+    if (typeof onMeshesReady === "function") onMeshesReady(found);
   }, [fbx]);
 
   // Mise à jour des couleurs en fonction de la sélection
@@ -59,7 +62,7 @@ function FBXHuman({
   }, [meshes, selectedParts]);
 
   return (
-    <group ref={groupRef} scale={0.17} position={[0, -1, 0]}>
+    <group ref={groupRef} scale={0.17} position={[0, -1.5, 0]}>
       {meshes.map((mesh) => (
         <primitive
           key={mesh.uuid}

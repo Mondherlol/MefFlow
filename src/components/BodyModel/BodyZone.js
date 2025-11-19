@@ -1,17 +1,14 @@
 
 const BODY_ZONES = {
   chest: {
-    id: "chest",
     label: "Torse / Poitrine",
-    parts: ["Pecs", "HautDos", "BasDos"],
+    parts: ["Pecs", "HautDos", "BasDos", "CageThoracique" ],
   },
   abdomen: {
-    id: "abdomen",
     label: "Ventre / Abdomen",
     parts: ["Abdos", "VentreGauche", "VentreDroit", "Pubis"],
   },
   head: {
-    id: "head",
     label: "Tête",
     parts: [
       "Nez",
@@ -30,7 +27,6 @@ const BODY_ZONES = {
     ],
   },
   upperLimbLeft: {
-    id: "upperLimbLeft",
     label: "Bras / main gauche",
     parts: [
       "PouceGauche",
@@ -48,7 +44,6 @@ const BODY_ZONES = {
     ],
   },
   upperLimbRight: {
-    id: "upperLimbRight",
     label: "Bras / main droite",
     parts: [
       "PouceDroit",
@@ -66,7 +61,6 @@ const BODY_ZONES = {
     ],
   },
   lowerLimbLeft: {
-    id: "lowerLimbLeft",
     label: "Jambe / pied gauche",
     parts: [
       "CuisseGauche",
@@ -80,7 +74,6 @@ const BODY_ZONES = {
     ],
   },
   lowerLimbRight: {
-    id: "lowerLimbRight",
     label: "Jambe / pied droite",
     parts: [
       "CuisseDroit",
@@ -94,17 +87,14 @@ const BODY_ZONES = {
     ],
   },
   back: {
-    id: "back",
     label: "Rachis / Dos",
     parts: ["HautDos", "BasDos", "Nuque"],
   },
   neck: {
-    id: "neck",
     label: "Cou / nuque",
     parts: ["Cou", "Nuque"],
   },
   other: {
-    id: "other",
     label: "Autre région",
     parts: [],
   },

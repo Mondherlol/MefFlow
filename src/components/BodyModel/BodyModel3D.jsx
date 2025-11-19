@@ -1,19 +1,14 @@
 // src/components/BodyModel3D.jsx
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
-import {
-  RotateCw,
-  RotateCcw,
-  ZoomIn,
-  ZoomOut,
-  Crosshair,
-} from "lucide-react";
+import ControlsOverlay from "./ControlsOverlay";
+import { RotateCcw } from "lucide-react";
 import { BODY_ZONES, PARTS_NAMES, getPartName, getZoneKeyForPart, getZoneName } from "./BodyZone";
 import FBXHuman from "./FBXHuman";
-import CustomOrbitControls from "./CustomOrbitControl"; // pour le contrôle de la caméra
+import CustomOrbitControls from "./CustomOrbitControl"; 
 
 import ControlPanel from "./ControlPanel";
-import { SYMPTOM_LIST, getSymptomsFor, SYMPTOM_MAP, searchSymptoms } from "./Symptome";
 import SymptomPanel from "./SymptomPanel";
 
 // Helper local: get zone label for a part
@@ -22,44 +17,15 @@ function getZoneLabelForPart(partName) {
   return getZoneName(key) ?? BODY_ZONES.other.label;
 }
 
-// Small suggestions dropdown component for autocomplete
-function SuggestionsList({ query, activePart, onSelect, selectedIds = [] }) {
-  const zoneKey = activePart ? getZoneKeyForPart(activePart) : null;
-  // prefer searchSymptoms for better behavior (includes ALL when no part)
-  const pool = (typeof searchSymptoms === "function") ? searchSymptoms(query, activePart, zoneKey, 8) : getSymptomsFor(activePart, zoneKey);
-  const candidates = (pool || []).filter((s) => !selectedIds.includes(s.id)).slice(0, 8);
-
-  if (!candidates || candidates.length === 0)
-    return (
-      <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-sm z-50 p-2 text-xs text-slate-500">Aucun résultat</div>
-    );
-
-  return (
-    <ul className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-md shadow-sm z-50 max-h-48 overflow-auto">
-      {candidates.map((s) => (
-        <li
-          key={s.id}
-          onMouseDown={(e) => { e.preventDefault(); onSelect(s); }}
-          className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
-        >
-          {s.label}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-
-
 /**
  * Composant principal
  */
 export default function BodyModel3D() {
   const [selectedParts, setSelectedParts] = useState([]);
   const [activePart, setActivePart] = useState(null);
-  const [selectedSymptomsByPart, setSelectedSymptomsByPart] = useState({});
   const [partsMeta, setPartsMeta] = useState({});
-  // search state moved inside SymptomPanel
+  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
+  
   const [tooltip, setTooltip] = useState({
     visible: false,
     x: 0,
@@ -69,19 +35,15 @@ export default function BodyModel3D() {
 
   const containerRef = useRef();
   const controlsRef = useRef();
-
-  const totalSymptoms = useMemo(
-    () =>
-      Object.values(selectedSymptomsByPart || {}).reduce((acc, arr) => acc + (arr?.length || 0), 0),
-    [selectedSymptomsByPart]
-  );
+  const meshesRef = useRef(null);
 
   const handleBodyPartClick = (part) => {
     setSelectedParts((prev) => {
       if (prev.includes(part)) {
         const next = prev.filter((p) => p !== part);
         if (activePart === part) {
-          setActivePart(next[0] || null);
+            // Si on désélectionne la partie active, on switch sur la dernière sélectionnée s'il en reste
+            setActivePart(next.length > 0 ? next[next.length - 1] : null);
         }
         return next;
       }
@@ -90,10 +52,15 @@ export default function BodyModel3D() {
     });
   };
 
+  // Nouvelle fonction nécessaire pour les onglets du nouveau design
+  const handleSelectPartFromPanel = (part) => {
+      setActivePart(part);
+  };
+
   const clearSelection = () => {
     setSelectedParts([]);
     setActivePart(null);
-    setSelectedSymptomsByPart({});
+    setSelectedSymptoms([]);
   };
 
   // tooltip handlers
@@ -138,62 +105,39 @@ export default function BodyModel3D() {
     });
   };
 
-  // gestion des chips symptômes
-  // NEW: selectedSymptomsByPart shape: { [partId]: [ {id,label,intensity} ] }
-  const handleAddSymptomToPart = (part, symptomObj) => {
-    setSelectedSymptomsByPart((prev) => {
-      const current = prev[part] || [];
-      if (current.find((s) => s.id === symptomObj.id)) return prev; // already added
-      const next = { ...prev, [part]: [...current, { ...symptomObj, intensity: 5 }] };
-      return next;
-    });
-  };
-
-  const handleRemoveSymptomFromPart = (part, symptomId) => {
-    setSelectedSymptomsByPart((prev) => {
-      const current = prev[part] || [];
-      const nextList = current.filter((s) => s.id !== symptomId);
-      return { ...prev, [part]: nextList };
-    });
-  };
-
-  const handleSetIntensity = (part, symptomId, intensity) => {
-    setSelectedSymptomsByPart((prev) => {
-      const current = prev[part] || [];
-      const nextList = current.map((s) => (s.id === symptomId ? { ...s, intensity } : s));
-      return { ...prev, [part]: nextList };
-    });
-  };
-
-  const activeSymptoms = activePart ? getSymptomsFor(activePart, getZoneKeyForPart(activePart)) : [];
-
-  // zoom / rotation via boutons
-  const handleZoom = (direction) => {
-    if (!controlsRef.current) return;
-    const factor = direction === "in" ? 0.9 : 1.1;
-    if (direction === "in") controlsRef.current.dollyIn(factor);
-    else controlsRef.current.dollyOut(factor);
-    controlsRef.current.update();
-  };
-
-  const handleRotateAround = (direction) => {
-    if (!controlsRef.current) return;
-    const angle = direction === "left" ? 0.3 : -0.3;
-    controlsRef.current.rotateLeft(angle);
-    controlsRef.current.update();
-  };
-
-  const handleResetView = () => {
-    if (!controlsRef.current) return;
-    controlsRef.current.reset();
-  };
-
   // s'assurer qu'il y a toujours une partie active si une partie est sélectionnée
   useEffect(() => {
     if (!activePart && selectedParts.length > 0) {
       setActivePart(selectedParts[0]);
     }
   }, [activePart, selectedParts]);
+
+  // Handlers for SymptomPanel
+  const onAddSymptom = (symptom) => {
+    setSelectedSymptoms((prev) => {
+      if (prev.find((s) => s.id === symptom.id)) return prev;
+      return [
+        ...prev,
+        {
+          ...symptom,
+          intensity: 3, // Default intensity (modifié pour correspondre au scale emoji)
+          partId: symptom.partId ?? activePart ?? null,
+        },
+      ];
+    });
+  };
+
+  const onRemoveSymptom = (id) => {
+    setSelectedSymptoms((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const onUpdateIntensity = (id, intensity) => {
+    setSelectedSymptoms((prev) => prev.map((s) => (s.id === id ? { ...s, intensity } : s)));
+  };
+
+  const onAnalyze = () => {
+    console.log("Analyzing symptoms:", selectedSymptoms);
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-slate-100 to-slate-200 p-4 lg:p-8">
@@ -240,6 +184,9 @@ export default function BodyModel3D() {
                   }}
                   onPointerMoveCallback={handlePartPointerMove}
                   onPointerOutCallback={handlePartPointerOut}
+                onMeshesReady={(meshes) => {
+                  meshesRef.current = meshes;
+                }}
                 />
 
                 <CustomOrbitControls controlsRef={controlsRef} />
@@ -248,47 +195,10 @@ export default function BodyModel3D() {
               {/* Panneau d'aide controls (en bas à gauche) */}
               <ControlPanel />
 
-              {/* Boutons zoom / rotation / reset (en haut à droite) */}
-              <div className="absolute top-4 right-4 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleZoom("in")}
-                  className="p-2 rounded-full bg-slate-900/80 text-slate-50 hover:bg-slate-900 transition shadow-lg backdrop-blur border border-slate-700/60"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleZoom("out")}
-                  className="p-2 rounded-full bg-slate-900/80 text-slate-50 hover:bg-slate-900 transition shadow-lg backdrop-blur border border-slate-700/60"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </button>
-                <div className="h-px w-7 mx-auto bg-slate-700/70 my-1" />
-                <button
-                  type="button"
-                  onClick={() => handleRotateAround("left")}
-                  className="p-2 rounded-full bg-slate-900/80 text-slate-50 hover:bg-slate-900 transition shadow-lg backdrop-blur border border-slate-700/60"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleRotateAround("right")}
-                  className="p-2 rounded-full bg-slate-900/80 text-slate-50 hover:bg-slate-900 transition shadow-lg backdrop-blur border border-slate-700/60"
-                >
-                  <RotateCw className="w-4 h-4" />
-                </button>
-                <div className="h-px w-7 mx-auto bg-slate-700/70 my-1" />
-                <button
-                  type="button"
-                  onClick={handleResetView}
-                  className="p-2 rounded-full bg-slate-900/80 text-slate-50 hover:bg-slate-900 transition shadow-lg backdrop-blur border border-slate-700/60"
-                  title="Réinitialiser la vue"
-                >
-                  <Crosshair className="w-4 h-4" />
-                </button>
-              </div>
+              {/* Controls overlay (zoom / rotation / reset) */}
+              <ControlsOverlay
+                controlsRef={controlsRef}
+              />
 
               {/* Tooltip */}
               {tooltip.visible && (
@@ -324,16 +234,22 @@ export default function BodyModel3D() {
             </div>
           </div>
 
-          <SymptomPanel
-            selectedParts={selectedParts}
-            activePart={activePart}
-            partsMeta={partsMeta}
-            selectedSymptomsByPart={selectedSymptomsByPart}
-            setActivePart={setActivePart}
-            handleAddSymptomToPart={handleAddSymptomToPart}
-            handleRemoveSymptomFromPart={handleRemoveSymptomFromPart}
-            handleSetIntensity={handleSetIntensity}
-          />
+          {/* MODIFICATION ICI : 
+            1. Ajout de la classe h-[420px] lg:h-[520px] pour forcer la même hauteur que la 3D
+            2. Passage de selectedParts et onSelectPart
+          */}
+          <div className="h-[420px] lg:h-[520px]"> 
+            <SymptomPanel
+              activePart={activePart}
+              selectedParts={selectedParts} // Nouveau : pour les onglets
+              onSelectPart={handleSelectPartFromPanel} // Nouveau : pour navigation
+              selectedSymptoms={selectedSymptoms}
+              onAddSymptom={onAddSymptom}
+              onRemoveSymptom={onRemoveSymptom}
+              onUpdateIntensity={onUpdateIntensity}
+              onAnalyze={onAnalyze}
+            />
+          </div>
         </div>
       </div>
     </div>

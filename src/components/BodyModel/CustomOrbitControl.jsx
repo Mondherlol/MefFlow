@@ -15,7 +15,7 @@ function CustomOrbitControls({ controlsRef }) {
       maxPolarAngle={Math.PI * 0.95}
       minDistance={1.5}
       maxDistance={7}
-      target={[0, 0.5, 0]}
+      target={[0, 0, 0]}
       panSpeed={0.8}
 
     />
