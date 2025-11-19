@@ -1,85 +1,122 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Plus, X, Activity, Info, Thermometer, AlertTriangle, ChevronRight } from "lucide-react";
-import * as Slider from "@radix-ui/react-slider"; // Le slider pro
-import { motion, AnimatePresence } from "framer-motion"; // Pour l'animation fluide
+import { Search, Plus, X, Activity, Info, Thermometer, AlertTriangle } from "lucide-react";
+import * as Slider from "@radix-ui/react-slider";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { searchSymptoms, getSymptomsForPart } from "./SymptomData";
 import { getPartName } from "./BodyZone";
 
-// Utilitaire pour fusionner les classes proprement
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-// Échelle de douleur (Couleurs vives thème clair)
+// --- CONFIGURATION DE LA DOULEUR ---
 const PAIN_LEVELS = [
-  { label: "Léger", emoji: "🙂", color: "bg-emerald-400", text: "text-emerald-600", gradient: "from-emerald-300 to-emerald-500" },
-  { label: "Gênant", emoji: "😐", color: "bg-sky-400", text: "text-sky-600", gradient: "from-sky-300 to-sky-500" },
-  { label: "Douloureux", emoji: "😟", color: "bg-amber-400", text: "text-amber-600", gradient: "from-amber-300 to-amber-500" },
-  { label: "Intense", emoji: "😣", color: "bg-orange-500", text: "text-orange-600", gradient: "from-orange-400 to-orange-600" },
-  { label: "Insupportable", emoji: "🥵", color: "bg-red-600", text: "text-red-600", gradient: "from-red-500 to-red-700" },
+  { label: "Léger", emoji: "🙂", color: "bg-emerald-400", text: "text-emerald-600", gradient: "from-emerald-300 to-emerald-500", shadow: "shadow-emerald-200" },
+  { label: "Gênant", emoji: "😐", color: "bg-sky-400", text: "text-sky-600", gradient: "from-sky-300 to-sky-500", shadow: "shadow-sky-200" },
+  { label: "Douloureux", emoji: "😟", color: "bg-amber-400", text: "text-amber-600", gradient: "from-amber-300 to-amber-500", shadow: "shadow-amber-200" },
+  { label: "Intense", emoji: "😣", color: "bg-orange-500", text: "text-orange-600", gradient: "from-orange-400 to-orange-600", shadow: "shadow-orange-200" },
+  { label: "Insupportable", emoji: "😫", color: "bg-red-600", text: "text-red-600", gradient: "from-red-500 to-red-700", shadow: "shadow-red-200" },
+  { label: "Extrême", emoji: "💀", color: "bg-purple-700", text: "text-purple-700", gradient: "from-purple-600 to-purple-800", shadow: "shadow-purple-200" },
 ];
 
 const getPainInfo = (level) => {
-  const idx = Math.ceil(level / 2) - 1;
-  return PAIN_LEVELS[Math.max(0, Math.min(idx, 4))];
+  // Map 1-2 -> 0, 3-4 -> 1, 5-6 -> 2, 7-8 -> 3, 9 -> 4, 10 -> 5
+  let idx;
+  if (level === 10) {
+    idx = PAIN_LEVELS.length - 1; // ensure 10 maps to the last (Extrême)
+  } else {
+    idx = Math.ceil(level / 2) - 1;
+  }
+  return PAIN_LEVELS[Math.max(0, Math.min(idx, PAIN_LEVELS.length - 1))];
 };
 
-// --- SOUS-COMPOSANT : SLIDER AVEC ANIMATION ---
-const PainSlider = ({ value, onChange, painInfo }) => {
+// --- NOUVEAU COMPOSANT CARD COMPACT ---
+const SymptomCard = ({ symptom, onRemove, onUpdateIntensity }) => {
+  const painInfo = getPainInfo(symptom.intensity);
+
   return (
-    <div className="w-full">
-      {/* Zone Emoji Animé */}
-      <div className="flex justify-between items-end mb-3">
-        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Intensité</label>
-        <div className="flex flex-col items-end">
-           {/* L'émoji est gros (text-4xl) et animé avec Framer Motion */}
-           <AnimatePresence mode="wait">
-            <motion.div
-              key={painInfo.label} // Change l'animation quand le label change
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: 10 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="text-4xl drop-shadow-md mb-1 origin-bottom"
-            >
-               {/* Petit tremblement si la douleur est haute (>6) */}
-               <motion.div
-                 animate={value > 6 ? { x: [-1, 1, -1, 1, 0] } : {}}
-                 transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1 }}
-               >
-                 {painInfo.emoji}
-               </motion.div>
-            </motion.div>
-           </AnimatePresence>
-           <span className={`text-xs font-bold ${painInfo.text} transition-colors duration-300`}>
-             {painInfo.label} ({value}/10)
-           </span>
+    <motion.div
+      layout // Permet une réorganisation fluide de la liste quand on supprime un item
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+      className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+    >
+      {/* Barre latérale de couleur (plus fine) */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${painInfo.color} transition-colors duration-500`} />
+
+      <div className="pl-4 pr-4 pt-3 pb-2">
+        {/* LIGNE 1: Titre + Bouton Supprimer */}
+        <div className="flex justify-between items-start mb-1">
+          <h4 className="font-bold text-slate-800 text-sm leading-tight pr-2">
+            {symptom.label}
+          </h4>
+          <button
+            onClick={() => onRemove(symptom.id)}
+            className="text-slate-300 hover:bg-red-50 hover:text-red-500 p-1 -mr-2 -mt-1 rounded-full transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* LIGNE 2: Infos Compactes (Corps + Emoji + Intensité) */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Zone du corps */}
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+            {symptom.partId ? getPartName(symptom.partId) : "Général"}
+          </span>
+
+          {/* Zone Emoji + Label (Aligné à droite) */}
+          <div className="flex items-center gap-2 bg-slate-50 rounded-lg px-2 py-1 border border-slate-100">
+            {/* Container relatif pour superposer les émojis lors de l'animation */}
+            <div className="relative w-5 h-5 flex items-center justify-center">
+              <AnimatePresence>
+                <motion.div
+                  key={painInfo.label} // Clé unique pour déclencher l'anim
+                  initial={{ opacity: 0, scale: 0.5, rotate: -20 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 1.5, filter: "blur(4px)" }} // Fade out smooth
+                  transition={{ duration: 0.3, ease: "backOut" }}
+                  className="absolute text-lg leading-none origin-center"
+                >
+                  {painInfo.emoji}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+            
+            <span className={`text-xs font-bold ${painInfo.text} transition-colors duration-300 w-fit text-right`}>
+              {painInfo.label} <span className="text-slate-400 text-[10px]">({symptom.intensity}/10)</span>
+            </span>
+          </div>
+        </div>
+
+        {/* LIGNE 3: Slider (Full width sans boite) */}
+        <div className="relative w-full h-6 flex items-center touch-none select-none">
+          <Slider.Root
+            className="relative flex items-center select-none touch-none w-full h-5"
+            value={[symptom.intensity]}
+            max={10}
+            min={1}
+            step={1}
+            onValueChange={(val) => onUpdateIntensity(symptom.id, val[0])}
+          >
+            <Slider.Track className="bg-slate-100 relative grow rounded-full h-1.5 overflow-hidden">
+              <Slider.Range className={`absolute h-full rounded-full bg-gradient-to-r ${painInfo.gradient} transition-all duration-300`} />
+            </Slider.Track>
+            <Slider.Thumb
+              className={`block w-5 h-5 bg-white border border-slate-200 shadow-sm rounded-full hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400/50 transition-transform ${painInfo.text.replace('text-', 'border-')}`}
+              aria-label="Intensité"
+            />
+          </Slider.Root>
         </div>
       </div>
-
-      {/* Le Slider Radix UI */}
-      <Slider.Root
-        className="relative flex items-center select-none touch-none w-full h-5"
-        value={[value]}
-        max={10}
-        min={1}
-        step={1}
-        onValueChange={(val) => onChange(val[0])}
-      >
-        <Slider.Track className="bg-slate-200 relative grow rounded-full h-2 overflow-hidden">
-          <Slider.Range className={`absolute h-full rounded-full bg-gradient-to-r ${painInfo.gradient} transition-all duration-300`} />
-        </Slider.Track>
-        <Slider.Thumb
-          className={`block w-6 h-6 bg-white border-2 border-slate-100 shadow-[0_2px_10px] shadow-black/10 rounded-full hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 transition-transform ${painInfo.text.replace('text-', 'border-')}`}
-          aria-label="Intensité"
-        />
-      </Slider.Root>
-    </div>
+    </motion.div>
   );
 };
 
+// --- MAIN COMPONENT ---
 export default function SymptomPanel({
   activePart,
   selectedParts,
@@ -120,7 +157,7 @@ export default function SymptomPanel({
     <div className="flex flex-col h-full max-h-full bg-white/95 backdrop-blur-2xl border border-sky-100 rounded-3xl shadow-2xl shadow-sky-200/30 overflow-hidden ring-1 ring-white/50">
       
       {/* --- HEADER --- */}
-      <div className="flex-none p-5 bg-gradient-to-b from-white to-sky-50/30 border-b border-sky-100 z-20">
+      <div className="flex-none p-5 bg-linear-to-b from-white to-sky-50/30 border-b border-sky-100 z-20">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             <div className="p-1.5 bg-sky-100 rounded-lg">
@@ -181,7 +218,7 @@ export default function SymptomPanel({
       </div>
 
       {/* --- CORPS --- */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar bg-slate-50/50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar bg-slate-50/50">
         
         {/* Suggestions (Scroll Horizontal) */}
         {activePart && contextualSuggestions.length > 0 && (
@@ -207,68 +244,40 @@ export default function SymptomPanel({
           </div>
         )}
 
-        {/* Cartes Symptômes */}
-        {selectedSymptoms.length > 0 ? (
-          <div className="space-y-4 pb-4">
-            {selectedSymptoms.map((s) => {
-                const painInfo = getPainInfo(s.intensity);
-                return (
-                    <motion.div 
-                        key={s.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-lg hover:shadow-sky-100/50 transition-all duration-300 overflow-hidden"
-                    >
-                        {/* Barre latérale "Flush" */}
-                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${painInfo.color} transition-colors duration-500`} />
-
-                        <div className="pl-5 p-4">
-                            <div className="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 className="font-bold text-slate-800 text-base">{s.label}</h4>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                                        {s.partId ? getPartName(s.partId) : "Général"}
-                                    </span>
-                                </div>
-                                <button 
-                                    onClick={() => onRemoveSymptom(s.id)}
-                                    className="text-slate-300 hover:bg-red-50 hover:text-red-500 p-1.5 rounded-full transition-colors"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            {/* LE NOUVEAU SLIDER EST ICI */}
-                            <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-100/80">
-                                <PainSlider 
-                                    value={s.intensity} 
-                                    painInfo={painInfo}
-                                    onChange={(val) => onUpdateIntensity(s.id, val)} 
-                                />
-                            </div>
-                        </div>
-                    </motion.div>
-                );
-            })}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60 mt-8">
-             <div className="w-20 h-20 bg-sky-50 rounded-full flex items-center justify-center mb-4 animate-pulse">
-                <Thermometer className="w-8 h-8 text-sky-300" />
-             </div>
-             <p className="text-slate-500 font-medium">Aucun symptôme listé.</p>
-          </div>
-        )}
+        {/* LISTE DES CARTES */}
+        <div className="space-y-3 pb-4">
+           <AnimatePresence mode="popLayout"> 
+            {selectedSymptoms.length > 0 ? (
+              selectedSymptoms.map((s) => (
+                <SymptomCard 
+                  key={s.id} 
+                  symptom={s} 
+                  onRemove={onRemoveSymptom} 
+                  onUpdateIntensity={onUpdateIntensity} 
+                />
+              ))
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="h-full flex flex-col items-center justify-center text-center p-4 opacity-60 mt-8"
+              >
+                 <div className="w-16 h-16 bg-sky-50 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                    <Thermometer className="w-6 h-6 text-sky-300" />
+                 </div>
+                 <p className="text-slate-500 font-medium text-sm">Aucun symptôme listé.</p>
+              </motion.div>
+            )}
+           </AnimatePresence>
+        </div>
       </div>
 
       {/* --- FOOTER --- */}
-      <div className="flex-none p-5 border-t border-slate-100 bg-white z-20">
+      <div className="flex-none p-4 border-t border-slate-100 bg-white z-20">
         <button
           onClick={onAnalyze}
           disabled={selectedSymptoms.length === 0}
           className={`
-            w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-sm tracking-wide shadow-xl transition-all transform active:scale-[0.98]
+            w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-bold text-sm tracking-wide shadow-xl transition-all transform active:scale-[0.98]
             ${selectedSymptoms.length > 0
               ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-orange-500/30 hover:shadow-orange-500/50 hover:-translate-y-0.5 cursor-pointer"
               : "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"

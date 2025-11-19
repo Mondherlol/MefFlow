@@ -158,7 +158,7 @@ export default function BodyModel3D() {
           <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-xl shadow-slate-200/60 p-4 lg:p-6">
             <div
               ref={containerRef}
-              className="relative h-[420px] lg:h-[520px] rounded-2xl overflow-hidden bg-linear-to-b from-slate-900 via-slate-900 to-slate-950"
+              className="relative h-[420px] lg:h-[520px] rounded-2xl overflow-hidden bg-linear-to-b from-sky-900 via-slate-900 to-slate-950"
             >
               <Canvas camera={{ position: [0, 1.2, 6], fov: 40 }}>
                 <ambientLight intensity={0.5} />
@@ -234,11 +234,8 @@ export default function BodyModel3D() {
             </div>
           </div>
 
-          {/* MODIFICATION ICI : 
-            1. Ajout de la classe h-[420px] lg:h-[520px] pour forcer la même hauteur que la 3D
-            2. Passage de selectedParts et onSelectPart
-          */}
-          <div className="h-[420px] lg:h-[520px]"> 
+  
+          <div className="h-[500px] lg:h-[600px]"> 
             <SymptomPanel
               activePart={activePart}
               selectedParts={selectedParts} // Nouveau : pour les onglets
