@@ -227,10 +227,10 @@ export default function ReceptionnistHome() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
+                <Link to="/reception/patients" className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-slate-500">Patients</div>
                   <div className="font-bold text-slate-800">{stats.patients}</div>
-                </div>
+                </Link>
                 <div className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-slate-500">Demandes</div>
                   <div className="font-bold text-slate-800">{stats.requests}</div>
