@@ -45,6 +45,15 @@ export default function ScheduleRequest() {
         const requestData = reqRes.data;
         setRequest(requestData);
 
+        // Initialiser consultationProvisoire avec les infos du patient et médecin
+        if (requestData.patient && requestData.doctor) {
+          setConsultationProvisoire((prev) => ({
+            ...prev,
+            title: requestData.patient.full_name || requestData.patient.first_name || "Patient",
+            duree: requestData.doctor.duree_consultation || 30,
+          }));
+        }
+
         // Charger les horaires du médecin
         if (requestData.doctor?.id) {
           setLoadingHoraires(true);
@@ -93,20 +102,29 @@ export default function ScheduleRequest() {
     return horaires.map((s) => ({ id: s.id, weekday: s.weekday, slots: s.slots }));
   }, [horaires]);
 
-  // Superposer les préférences du patient sur le calendrier
-  const patientOptionsOverlay = useMemo(() => {
-    if (!request?.patient_options) return [];
+  // Convertir les préférences du patient en format de disponibilité
+  const patientAvailabilityForCalendar = useMemo(() => {
+    if (!request?.patient_options || !weekStart) return [];
     
-    return request.patient_options.map(opt => ({
-      id: `patient-pref-${opt.date}-${opt.start}`,
-      date: opt.date,
-      start: opt.start,
-      end: opt.end,
-      title: "🕐 Préférence patient",
-      patient: request.patient,
-      isPatientPreference: true
-    }));
-  }, [request?.patient_options]);
+    // Grouper les préférences par jour de la semaine
+    const byWeekday = Array.from({ length: 7 }, () => ({ slots: [] }));
+    
+    request.patient_options.forEach(opt => {
+      const optDate = new Date(opt.date);
+      const weekday = (optDate.getDay() + 6) % 7; // Convertir Dimanche=0 -> Lundi=0
+      
+      byWeekday[weekday].slots.push({
+        start: opt.start,
+        end: opt.end
+      });
+    });
+    
+    return byWeekday.map((day, idx) => ({
+      id: `patient-pref-${idx}`,
+      weekday: idx,
+      slots: day.slots
+    })).filter(day => day.slots.length > 0);
+  }, [request?.patient_options, weekStart]);
 
   const handleConfirm = async () => {
     if (!consultationProvisoire?.date || !consultationProvisoire?.start) {
@@ -230,26 +248,6 @@ export default function ScheduleRequest() {
             </button>
           </div>
 
-          {/* Préférences patient */}
-          {hasPatientPreferences && (
-            <div className="mt-4 p-3 rounded-lg bg-sky-50 border border-sky-200">
-              <div className="flex items-center gap-2 text-sm font-semibold text-sky-900 mb-2">
-                <AlertCircle className="w-4 h-4" />
-                Créneaux préférés par le patient ({request.patient_options.length})
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {request.patient_options.map((opt, idx) => (
-                  <div key={idx} className="px-2.5 py-1 rounded-md bg-white border border-sky-200 text-xs text-sky-800">
-                    {new Date(opt.date).toLocaleDateString('fr-FR', { 
-                      weekday: 'short', 
-                      day: '2-digit', 
-                      month: 'short' 
-                    })} · {opt.start} - {opt.end}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Calendrier hebdomadaire avec emploi du médecin */}
@@ -281,8 +279,9 @@ export default function ScheduleRequest() {
             onNextWeek={nextWeek}
             hours={{ start: 8, end: 18 }}
             slotMinutes={15}
-            consultations={[...consultations, ...patientOptionsOverlay]}
+            consultations={consultations}
             availability={availabilityForCalendar}
+            patientAvailability={patientAvailabilityForCalendar}
             loading={loadingHoraires || loadingConsultations}
             onChange={() => { toast("Vous ne pouvez pas décaler ce RDV.", {icon: "☹️"}); }}
             consultationProvisoire={consultationProvisoire}
@@ -292,11 +291,14 @@ export default function ScheduleRequest() {
           {hasPatientPreferences && (
             <div className="mt-4 flex items-center gap-3 text-xs text-slate-600">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-amber-100 border border-amber-400" />
+                <div className="w-6 h-6 rounded" style={{
+                  background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, #fbbf2440 4px, #fbbf2440 8px)',
+                  border: '1px solid #fbbf2466'
+                }} />
                 <span>Préférences patient</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded bg-emerald-100 border border-emerald-300" />
+                <div className="w-6 h-6 rounded bg-emerald-100 border-2 border-dashed border-emerald-300" />
                 <span>Créneau sélectionné</span>
               </div>
             </div>
@@ -331,17 +333,23 @@ export default function ScheduleRequest() {
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <div className="text-xs text-slate-500 mb-1">Date</div>
-                    <div className="font-medium text-slate-900">
-                      {new Date(consultationProvisoire.date).toLocaleDateString('fr-FR', { 
-                        weekday: 'short', 
-                        day: 'numeric', 
-                        month: 'short' 
-                      })}
-                    </div>
+                    <input
+                      type="date"
+                      value={consultationProvisoire.date || ""}
+                      onChange={(e) => setConsultationProvisoire((prev) => ({ ...prev, date: e.target.value }))}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition"
+                      min={formatDateYMD(new Date())}
+                    />
                   </div>
                   <div>
                     <div className="text-xs text-slate-500 mb-1">Heure</div>
-                    <div className="font-medium text-slate-900">{consultationProvisoire.start}</div>
+                    <input
+                      type="time"
+                      step={300}
+                      value={consultationProvisoire.start || ""}
+                      onChange={(e) => setConsultationProvisoire((prev) => ({ ...prev, start: e.target.value }))}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-sky-200 focus:border-sky-400 transition"
+                    />
                   </div>
                 </div>
 
@@ -357,7 +365,7 @@ export default function ScheduleRequest() {
                 {/* Boutons */}
                 <div className="flex items-center gap-2 justify-end shrink-0">
                   <button
-                    onClick={() => setConsultationProvisoire({ date: null, start: null, title: "", duree: 15 })}
+                    onClick={() => setConsultationProvisoire((prev) => ({ ...prev, date: null, start: null }))}
                     className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium text-sm hover:bg-slate-50 transition"
                   >
                     Annuler

@@ -28,7 +28,7 @@ import CustomHome from "./pages/Admin/Clinic/CustomHome";
 import Horaires from "./pages/Admin/Clinic/Horaires";
 import EditClinic from "./pages/Admin/Clinic/EditClinic";
 import EditMedia from "./pages/Admin/Clinic/EditMedia";
-
+import StripeConfig from "./pages/Admin/StripeConfig";
 
 // Doctor pages
 import HomeDoctor from "./pages/Doctor/Home";
@@ -56,6 +56,7 @@ import HomePatient from "./pages/Patient/Home";
 import MyAppointments from "./pages/Patient/MyAppointments";
 import ConsultationDetail from "./pages/Patient/ConsultationDetail";  
 import UpdatePatientInfos from "./pages/Patient/UpdatePatientInfos";
+import PaymentSuccess from "./pages/Patient/PaymentSuccess";
 // Other pages
 import Landing from "./pages/Landing";
 import StartClinic from "./pages/StartClinic";
@@ -116,6 +117,7 @@ export default function App() {
     { path: "/admin/tarifs", component: Tarifs, clinicRoute: true, protectedRoles: ["ADMIN"] },
     { path: "/admin/billing/stripe", component: StripeBilling, clinicRoute: true, protectedRoles: ["ADMIN"] },
     { path: "/admin/factures", component: Factures, clinicRoute: true, protectedRoles: ["ADMIN"] },
+    { path: "/admin/stripe-config", component: StripeConfig, clinicRoute: true, protectedRoles: ["ADMIN"] },
   ];
 
   const doctorRoutes = [
@@ -148,6 +150,7 @@ export default function App() {
     { path :"/patient/rdv", component: MyAppointments, clinicRoute: true, protectedRoles: ["PATIENT"] },
     { path :"/patient/appointments/:id", component: ConsultationDetail, clinicRoute: true, protectedRoles: ["PATIENT"] },
     { path :"/patient/profile/edit", component: UpdatePatientInfos, clinicRoute: true, protectedRoles: ["PATIENT"] },
+    { path :"/patient/payment_success", component: PaymentSuccess, clinicRoute: true, protectedRoles: ["PATIENT"] },
   ];
 
   const clinicRoutes = [...clinicPublicRoutes, ...adminRoutes, ...doctorRoutes, ...receptionnistRoutes, ...patientsRoutes];

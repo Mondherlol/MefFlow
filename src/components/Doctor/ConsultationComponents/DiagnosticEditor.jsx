@@ -1,11 +1,43 @@
-import { FileText } from "lucide-react";
+import { FileText, Edit2, Save, X } from "lucide-react";
 
-export default function DiagnosticEditor({ value, onChange, editMode }) {
+export default function DiagnosticEditor({ value, onChange, editMode, onEdit, onSave, onCancel, saving }) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-      <div className="flex items-center gap-2 mb-4">
-        <FileText className="w-5 h-5 text-sky-600" />
-        <h2 className="text-lg font-semibold text-slate-900">Diagnostic médical</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <FileText className="w-5 h-5 text-sky-600" />
+          <h2 className="text-lg font-semibold text-slate-900">Diagnostic médical</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          {!editMode ? (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition"
+            >
+              <Edit2 className="w-4 h-4" />
+              Modifier
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+                Annuler
+              </button>
+            </>
+          )}
+        </div>
       </div>
       
       {editMode ? (

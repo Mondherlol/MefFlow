@@ -131,7 +131,7 @@ export default function Medecins() {
         form.append('email', email);
         form.append('password', password);
         form.append('full_name', fullName);
-        if (specialite) form.append('specialite', specialite);
+        form.append('specialite', "generaliste");
         if (phone) form.append('phone', phone);
         if (photo) form.append('photo', photo);
 

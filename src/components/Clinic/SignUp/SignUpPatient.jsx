@@ -8,7 +8,9 @@ import {
 import PhoneInput from "react-phone-number-input";
 import 'react-phone-number-input/style.css';
 import { useClinic } from "../../../context/clinicContext";
+import { useAuth } from "../../../context/authContext";
 import { withAlpha } from "../../../utils/colors";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -88,7 +90,7 @@ export default function SignUpPatient({ onSubmit }) {
 
   // Optionnels
   const [phone, setPhone] = useState("");
-  const [genre, setGenre] = useState("NA");
+  const [genre, setGenre] = useState("");
 
   // UI
   const [confirm, setConfirm] = useState("");
@@ -128,8 +130,30 @@ export default function SignUpPatient({ onSubmit }) {
 
     try {
       setLoading(true);
-      // Simulate request
-      await new Promise((r) => setTimeout(r, 600));
+      
+      const payload = {
+        clinic_id: clinic.id,
+        full_name: fullName,
+        date_naissance: dateNaissance,
+        email,
+        password,
+        phone: phone || null,
+        genre: genre || null,
+        blood_type: 'A+'
+      };
+
+      const response = await fetch(`${API_URL}/api/patients/public-signup/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Erreur lors de la création du compte");
+      }
 
       if (typeof onSubmit === "function") {
         await onSubmit({
@@ -141,10 +165,12 @@ export default function SignUpPatient({ onSubmit }) {
 
       setOk(true);
       setTimeout(() => {
-        navigate("/verify-email?email=" + encodeURIComponent(email) + "&next=" + encodeURIComponent(next), { replace: true });
+        toast.success("Compte créé avec succès. Vous pouvez maintenant vous connecter.");
+        navigate("/login");
+
       }, 500);
     } catch (err) {
-      setError("Impossible de créer le compte. Essayez à nouveau.");
+      setError(err.message || "Impossible de créer le compte. Essayez à nouveau.");
     } finally {
       setLoading(false);
     }
@@ -216,25 +242,25 @@ export default function SignUpPatient({ onSubmit }) {
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
-                      onClick={() => setGenre(genre === "H" ? "NA" : "H")}
-                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "H" ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-300 bg-white text-slate-700"}`}
+                      onClick={() => setGenre(genre === "HOMME" ? "" : "HOMME")}
+                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "HOMME" ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-300 bg-white text-slate-700"}`}
                     >
                       <Mars className="h-4 w-4" /> Homme
                     </button>
                     <button
                       type="button"
-                      onClick={() => setGenre(genre === "F" ? "NA" : "F")}
-                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "F" ? "border-pink-300 bg-pink-50 text-pink-800" : "border-slate-300 bg-white text-slate-700"}`}
+                      onClick={() => setGenre(genre === "FEMME" ? "" : "FEMME")}
+                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "FEMME" ? "border-pink-300 bg-pink-50 text-pink-800" : "border-slate-300 bg-white text-slate-700"}`}
                     >
                       <Venus className="h-4 w-4" /> Femme
                     </button>
                     <button
                       type="button"
-                      onClick={() => setGenre("NA")}
-                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "NA" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-slate-300 bg-white text-slate-700"}`}
-                      title="Préférer ne pas indiquer"
+                      onClick={() => setGenre(genre === "AUTRE" ? "" : "AUTRE")}
+                      className={`flex items-center justify-center gap-1 rounded-xl border px-3 py-2 text-sm ${genre === "AUTRE" ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-slate-300 bg-white text-slate-700"}`}
+                      title="Autre"
                     >
-                      <User className="h-4 w-4" /> N/A
+                      <User className="h-4 w-4" /> Autre
                     </button>
                   </div>
                 </Field>

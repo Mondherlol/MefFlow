@@ -39,12 +39,23 @@ export default function ReceptionnistHome() {
   const [editingConsultation, setEditingConsultation] = useState(null);
   const [loadingAction, setLoadingAction] = useState("");
 
-  // stats / notifications 
-  const stats = {
-    patients: 1245,
-    requests: 12, // nombre de demandes en attente
-    doctors: 18,
-  };
+  const [stats, setStats] = useState({
+    patients_count: 0,
+    doctors_count: 0,
+    demandes_total: 0,
+    demandes_pending: 0,
+  });
+
+    async function fetchStats() {
+    try {
+      const res = await api.get(`/api/receptionist/stats/`);
+      setStats(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error("Impossible de charger les statistiques");
+    } 
+  }
+
 
   async function fetchConsultations() {
     try {
@@ -67,6 +78,7 @@ export default function ReceptionnistHome() {
   useEffect(() => {
     if (clinic?.id) {
       fetchConsultations();
+      fetchStats();
     }
   }, [clinic?.id]);
 
@@ -184,7 +196,7 @@ export default function ReceptionnistHome() {
   };
 
   return (
-    <div className="min-h-[80dvh] bg-gradient-to-b from-slate-50 to-slate-100/60 p-6 md:p-10">
+    <div className="min-h-[80dvh] bg-linear-to-b from-slate-50 to-slate-100/60 p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* header */}
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
@@ -207,9 +219,9 @@ export default function ReceptionnistHome() {
                 <span className="text-sm text-slate-700">Demandes</span>
 
                 {/* badge */}
-                {stats.requests > 0 && (
+                {stats.demandes_pending  > 0 && (
                   <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-semibold leading-none text-white bg-rose-600 rounded-full shadow-sm">
-                    {stats.requests}
+                    {stats.demandes_pending }
                   </span>
                 )}
               </button>
@@ -229,20 +241,19 @@ export default function ReceptionnistHome() {
               <div className="flex items-center gap-3">
                 <Link to="/reception/patients" className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-slate-500">Patients</div>
-                  <div className="font-bold text-slate-800">{stats.patients}</div>
+                  <div className="font-bold text-slate-800">{stats.patients_count}</div>
                 </Link>
                 <div className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-slate-500">Demandes</div>
-                  <div className="font-bold text-slate-800">{stats.requests}</div>
+                  <div className="font-bold text-slate-800">{stats.demandes_total}</div>
                 </div>
                 <div className="text-center px-4 py-2 bg-white rounded-lg shadow-sm">
                   <div className="text-xs text-slate-500">Médecins</div>
-                  <div className="font-bold text-slate-800">{stats.doctors}</div>
+                  <div className="font-bold text-slate-800">{stats.doctors_count}</div>
                 </div>
               </div>
             </div>
 
-            {/* recherche intégrée */}
             <SearchBar />
           </div>
 
@@ -253,7 +264,6 @@ export default function ReceptionnistHome() {
           </div>
         </section>
 
-        {/* two columns: now / upcoming (split into components) */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <NowPanel
             consultations={nowConsultations}

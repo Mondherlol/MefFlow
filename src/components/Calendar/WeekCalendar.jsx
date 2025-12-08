@@ -16,6 +16,7 @@ export default function WeekCalendarDnD({
   slotMinutes = 15,
   consultations = [],
   availability = [],
+  patientAvailability = [],
   onChange,
   onEventClick,
   editMode,
@@ -82,6 +83,20 @@ export default function WeekCalendarDnD({
     });
     return byDay;
   }, [availability]);
+
+  const patientAvailabilityByDay = useMemo(() => {
+    const byDay = Array.from({ length: 7 }, () => []);
+    (patientAvailability || []).forEach((a) => {
+      if (!a || !Array.isArray(a.slots)) return;
+      const w = Number(a.weekday);
+      if (!Number.isFinite(w) || w < 0 || w >= 7) return;
+      a.slots.forEach((s, idx) => {
+        if (!s || !s.start || !s.end) return;
+        byDay[w].push({ id: `${a.id ?? `pav-${w}`}-${idx}`, start: s.start, end: s.end });
+      });
+    });
+    return byDay;
+  }, [patientAvailability]);
 
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   const fmt = (d) =>
@@ -269,7 +284,7 @@ const normalizedConsultations = useMemo(() => {
         duration = Number(c.duration || 0);
       }
 
-      const title = c.patient?.user?.full_name || c.patient?.full_name || c.patient?.user?.email || "Consultation";
+      const title = c.patient?.user?.full_name || c.patient?.full_name || c.patient?.user?.email || c.title || "Consultation";
 
       return {
         id: c.id,
@@ -278,6 +293,7 @@ const normalizedConsultations = useMemo(() => {
         duration: Math.max(0, Math.round(duration)),
         title,
         statusConsultation: c.statusConsultation,
+        isPatientPreference: c.isPatientPreference || false,
         raw: c,
       };
     })
@@ -389,6 +405,7 @@ const normalizedConsultations = useMemo(() => {
               slotMinutes={slotMinutes}
               slotHeight={SLOT_HEIGHT}
               availability={availabilityByDay[dayIdx] || []}
+              patientAvailability={patientAvailabilityByDay[dayIdx] || []}
               consultations={normalizedConsultations.filter((e) => e.dayIndex === dayIdx)}
               renderEvent={renderEvent}
               toMinutes={toMinutes}
@@ -400,6 +417,8 @@ const normalizedConsultations = useMemo(() => {
               onEventClick={onEventClick}
               editMode={editMode}
               doctorMode={doctorMode}
+              weekStart={weekStart}
+              setConsultationProvisoire={setConsultationProvisoire}
             />
           ))}
         </div>

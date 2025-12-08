@@ -1,12 +1,13 @@
-import { Pill, FileDown, X, Plus, Sparkles } from "lucide-react";
+import { Pill, FileDown, X, Plus, Sparkles, Edit2, Save } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { searchMedicaments, formatMedicamentSuggestion } from "../../../data/medicaments";
 
-export default function OrdonnanceEditor({ value, onChange, editMode, patientName }) {
+export default function OrdonnanceEditor({ value, onChange, editMode, patientName, onEdit, onSave, onCancel, saving }) {
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
   const [currentLine, setCurrentLine] = useState("");
+  const [suggestionPosition, setSuggestionPosition] = useState({ top: 0, left: 0 });
   const textareaRef = useRef(null);
   const suggestionsRef = useRef(null);
 
@@ -25,6 +26,45 @@ export default function OrdonnanceEditor({ value, onChange, editMode, patientNam
     return currentLineText.trim();
   };
 
+  // Calculer la position du curseur pour afficher les suggestions
+  const updateSuggestionPosition = () => {
+    if (!textareaRef.current) return;
+    
+    const textarea = textareaRef.current;
+    const { selectionStart } = textarea;
+    const text = textarea.value.substring(0, selectionStart);
+    const lines = text.split('\n');
+    
+    // Créer un élément temporaire pour mesurer la position
+    const tempDiv = document.createElement('div');
+    const styles = window.getComputedStyle(textarea);
+    tempDiv.style.cssText = `
+      position: absolute;
+      visibility: hidden;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font: ${styles.font};
+      padding: ${styles.padding};
+      border: ${styles.border};
+      width: ${textarea.clientWidth}px;
+      line-height: ${styles.lineHeight};
+    `;
+    tempDiv.textContent = text;
+    document.body.appendChild(tempDiv);
+    
+    const height = tempDiv.offsetHeight;
+    document.body.removeChild(tempDiv);
+    
+    // Position relative au textarea
+    const rect = textarea.getBoundingClientRect();
+    const lineHeight = parseFloat(styles.lineHeight) || 20;
+    
+    setSuggestionPosition({
+      top: Math.min(height, textarea.scrollHeight - 50), // Position du curseur dans le textarea
+      left: 0
+    });
+  };
+
   // Gérer les changements de texte
   const handleTextChange = (e) => {
     const newValue = e.target.value;
@@ -41,6 +81,7 @@ export default function OrdonnanceEditor({ value, onChange, editMode, patientNam
       const results = searchMedicaments(currentWord);
       setSuggestions(results);
       setSelectedIndex(0);
+      updateSuggestionPosition();
     } else {
       setSuggestions([]);
     }
@@ -210,17 +251,43 @@ export default function OrdonnanceEditor({ value, onChange, editMode, patientNam
                 <X className="w-3 h-3" />
                 Effacer
               </button>
+              <div className="h-6 w-px bg-slate-200 mx-1"></div>
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {saving ? "Sauvegarde..." : "Sauvegarder"}
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+                Annuler
+              </button>
             </>
           ) : (
-            value && (
+            <>
+              {value && (
+                <button
+                  onClick={handleGeneratePDF}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Générer PDF
+                </button>
+              )}
               <button
-                onClick={handleGeneratePDF}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition"
+                onClick={onEdit}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-sky-50 text-sky-700 rounded-lg hover:bg-sky-100 transition"
               >
-                <FileDown className="w-4 h-4" />
-                Générer PDF
+                <Edit2 className="w-4 h-4" />
+                Modifier
               </button>
-            )
+            </>
           )}
         </div>
       </div>
@@ -243,10 +310,10 @@ export default function OrdonnanceEditor({ value, onChange, editMode, patientNam
             {suggestions.length > 0 && (
               <div 
                 ref={suggestionsRef}
-                className="absolute z-50 mt-1 w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
+                className="absolute z-50 w-full max-w-md bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
                 style={{ 
-                  top: 'auto',
-                  left: 0,
+                  top: `${suggestionPosition.top - 10}px`,
+                  left: '12px',
                 }}
               >
                 <div className="p-2 bg-slate-50 border-b border-slate-200">

@@ -20,16 +20,24 @@ export default function ConsultationDetails() {
 
   const [consultation, setConsultation] = useState(location.state?.consultation || null);
   const [loading, setLoading] = useState(!consultation);
-  const [saving, setSaving] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [savingDiagnostic, setSavingDiagnostic] = useState(false);
+  const [savingOrdonnance, setSavingOrdonnance] = useState(false);
+  const [editModeDiagnostic, setEditModeDiagnostic] = useState(false);
+  const [editModeOrdonnance, setEditModeOrdonnance] = useState(false);
 
   const [diagnostique, setDiagnostique] = useState("");
   const [ordonnance, setOrdonnance] = useState("");
+  const [initialDiagnostique, setInitialDiagnostique] = useState("");
+  const [initialOrdonnance, setInitialOrdonnance] = useState("");
 
   useEffect(() => {
     if (consultation) {
-      setDiagnostique(consultation.diagnostique || "");
-      setOrdonnance(consultation.ordonnance || "");
+      const diag = consultation.diagnostique || "";
+      const ord = consultation.ordonnance || "";
+      setDiagnostique(diag);
+      setOrdonnance(ord);
+      setInitialDiagnostique(diag);
+      setInitialOrdonnance(ord);
     }
   }, [consultation]);
 
@@ -45,8 +53,12 @@ export default function ConsultationDetails() {
       const res = await api.get(`/api/consultations/${id}/`);
       const data = res.data?.data || res.data;
       setConsultation(data);
-      setDiagnostique(data.diagnostique || "");
-      setOrdonnance(data.ordonnance || "");
+      const diag = data.diagnostique || "";
+      const ord = data.ordonnance || "";
+      setDiagnostique(diag);
+      setOrdonnance(ord);
+      setInitialDiagnostique(diag);
+      setInitialOrdonnance(ord);
       console.log("Fetched consultation:", data);
     } catch (err) {
       console.error(err);
@@ -57,32 +69,46 @@ export default function ConsultationDetails() {
     }
   }
 
-  async function handleSave() {
+  async function handleSaveDiagnostic() {
     try {
-      setSaving(true);
-      const payload = {
-        diagnostique,
-        ordonnance,
-      };
-      
-      await api.patch(`/api/consultations/${id}/`, payload);
-      toast.success("Consultation mise à jour avec succès");
-      setEditMode(false);
-      
-      // Refresh consultation data
+      setSavingDiagnostic(true);
+      await api.patch(`/api/consultations/${id}/`, { diagnostique });
+      toast.success("Diagnostic sauvegardé avec succès");
+      setEditModeDiagnostic(false);
+      setInitialDiagnostique(diagnostique);
       fetchConsultation();
     } catch (err) {
       console.error(err);
-      toast.error("Erreur lors de la sauvegarde");
+      toast.error("Erreur lors de la sauvegarde du diagnostic");
     } finally {
-      setSaving(false);
+      setSavingDiagnostic(false);
     }
   }
 
-  function handleCancel() {
-    setDiagnostique(consultation?.diagnostique || "");
-    setOrdonnance(consultation?.ordonnance || "");
-    setEditMode(false);
+  async function handleSaveOrdonnance() {
+    try {
+      setSavingOrdonnance(true);
+      await api.patch(`/api/consultations/${id}/`, { ordonnance });
+      toast.success("Ordonnance sauvegardée avec succès");
+      setEditModeOrdonnance(false);
+      setInitialOrdonnance(ordonnance);
+      fetchConsultation();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la sauvegarde de l'ordonnance");
+    } finally {
+      setSavingOrdonnance(false);
+    }
+  }
+
+  function handleCancelDiagnostic() {
+    setDiagnostique(initialDiagnostique);
+    setEditModeDiagnostic(false);
+  }
+
+  function handleCancelOrdonnance() {
+    setOrdonnance(initialOrdonnance);
+    setEditModeOrdonnance(false);
   }
 
   if (loading) {
@@ -135,37 +161,6 @@ export default function ConsultationDetails() {
             <ArrowLeft className="w-5 h-5" />
             <span>Retour</span>
           </button>
-
-          <div className="flex items-center gap-3">
-            {!editMode ? (
-              <button
-                onClick={() => setEditMode(true)}
-                className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition flex items-center gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                Modifier
-              </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  <Save className="w-4 h-4" />
-                  {saving ? "Sauvegarde..." : "Sauvegarder"}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={saving}
-                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition flex items-center gap-2 disabled:opacity-50"
-                >
-                  <X className="w-4 h-4" />
-                  Annuler
-                </button>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Patient Info Card */}
@@ -255,14 +250,22 @@ export default function ConsultationDetails() {
             <DiagnosticEditor
               value={diagnostique}
               onChange={setDiagnostique}
-              editMode={editMode}
+              editMode={editModeDiagnostic}
+              onEdit={() => setEditModeDiagnostic(true)}
+              onSave={handleSaveDiagnostic}
+              onCancel={handleCancelDiagnostic}
+              saving={savingDiagnostic}
             />
 
             <OrdonnanceEditor
               value={ordonnance}
               onChange={setOrdonnance}
-              editMode={editMode}
+              editMode={editModeOrdonnance}
               patientName={patientName}
+              onEdit={() => setEditModeOrdonnance(true)}
+              onSave={handleSaveOrdonnance}
+              onCancel={handleCancelOrdonnance}
+              saving={savingOrdonnance}
             />
 
             {/* Historique below ordonnance */}

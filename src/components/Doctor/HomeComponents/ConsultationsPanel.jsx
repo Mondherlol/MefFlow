@@ -123,12 +123,16 @@ function ConsultationsPanel({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {
+                      consultation.statusConsultation === "confirme" && (
+                    
                     <button 
                       onClick={() => handlePostpone(consultation.id)} 
                       className="text-xs px-3 py-1 rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition"
                     >
                       Reporter
                     </button>
+                      )}
                     <button 
                       onClick={() => navigate('/consultation', { 
                         state: { 
@@ -177,12 +181,14 @@ function ConsultationsPanel({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {                      consultation.statusConsultation === "confirme" && (
                     <button 
                       onClick={() => handlePostpone(consultation.id)} 
                       className="text-xs px-3 py-1 cursor-pointer rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition "
                     >
                       Reporter
                     </button>
+                      )}
                     <button 
                       onClick={() => navigate('/doctor/consultation/'+consultation.id)}
                       className="text-xs px-3 py-1 rounded-md bg-white border text-slate-700 hover:bg-sky-500 hover:text-white transition cursor-pointer"

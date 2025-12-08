@@ -10,6 +10,7 @@ const DayColumn = React.memo(
       slotMinutes,
       slotHeight,
       availability,
+      patientAvailability,
       consultations,
       renderEvent,
       primary,
@@ -21,6 +22,8 @@ const DayColumn = React.memo(
       toMinutes,
       pxPerMinute,
       doctorMode,
+      weekStart,
+      setConsultationProvisoire,
     },
     ref
   ) {
@@ -45,6 +48,36 @@ const DayColumn = React.memo(
         ? overMinutesForDay * (slotHeight / slotMinutes)
         : null;
 
+    // Gestionnaire de clic pour positionner la consultation provisoire
+    const handleColumnClick = useCallback((e) => {
+      if (!setConsultationProvisoire || !weekStart) return;
+      
+      // Ne pas gérer le clic si c'est sur un événement
+      if (e.target.closest('[data-event]')) return;
+      
+      const rect = e.currentTarget.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      const minutes = Math.round(y / pxPerMinute);
+      const snappedMinutes = Math.round(minutes / slotMinutes) * slotMinutes;
+      
+      // Calculer l'heure
+      const totalMinutes = hours.start * 60 + snappedMinutes;
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      
+      // Calculer la date
+      const date = new Date(weekStart);
+      date.setDate(date.getDate() + dayIdx);
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      setConsultationProvisoire((prev) => ({
+        ...prev,
+        date: dateStr,
+        start: timeStr,
+      }));
+    }, [setConsultationProvisoire, weekStart, dayIdx, pxPerMinute, slotMinutes, hours]);
+
     return (
       <div
         ref={forwardRef}
@@ -54,6 +87,7 @@ const DayColumn = React.memo(
           showOver ? "bg-sky-50/40" : ""
         }`}
         style={{ borderColor: "#eef2f7" }}
+        onClick={handleColumnClick}
       >
         {/* Lignes horaires */}
         {Array.from({ length: hours.end - hours.start }).map((_, hour) => {
@@ -68,7 +102,7 @@ const DayColumn = React.memo(
           );
         })}
 
-        {/* Disponibilités */}
+        {/* Disponibilités médecin */}
         {(() => {
           const slots = Array.isArray(availability) ? availability : [];
           return slots.map((s, idx) => {
@@ -91,6 +125,34 @@ const DayColumn = React.memo(
                   border: `1px solid ${primary}33`,
                 }}
                 title={`Dispo ${s.start}–${s.end}`}
+              />
+            );
+          });
+        })()}
+
+        {/* Disponibilités patient (préférences) */}
+        {(() => {
+          const slots = Array.isArray(patientAvailability) ? patientAvailability : [];
+          return slots.map((s, idx) => {
+            if (!s || !s.start || !s.end) return null;
+            const [sh, sm] = String(s.start).split(":").map(Number);
+            const [eh, em] = String(s.end).split(":").map(Number);
+            const startMin = (sh - hours.start) * 60 + (sm || 0);
+            const endMin = (eh - hours.start) * 60 + (em || 0);
+            const top = startMin * (slotHeight / slotMinutes);
+            const height = (endMin - startMin) * (slotHeight / slotMinutes);
+            const key = `patient-${s.id ?? `day${dayIdx}`}-${idx}-${s.start}-${s.end}`;
+            return (
+              <div
+                key={key}
+                className="absolute left-1 right-1 rounded-md"
+                style={{
+                  top,
+                  height,
+                  background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, #fbbf2440 4px, #fbbf2440 8px)',
+                  border: '1px solid #fbbf2466',
+                }}
+                title={`Préférence patient ${s.start}–${s.end}`}
               />
             );
           });

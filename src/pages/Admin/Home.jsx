@@ -112,8 +112,7 @@ const HomeAdmin = () => {
   const [statsLoading, setStatsLoading] = useState(true);
 
   const stripeConnected =
-    clinic?.billing?.stripe?.connected === true ||
-    clinic?.stripeConnected === true;
+    clinic?.isStripeConfigured;
 
     useEffect(() => {
       let mounted = true;
@@ -192,7 +191,7 @@ const HomeAdmin = () => {
           </div>
           <button
             type="button"
-            onClick={() => console.log('Configurer Stripe')}
+            onClick={() => navigate('/admin/stripe-config')}
             className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium shadow-sm ${tokens.ring} ${
               stripeConnected
                 ? 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'

@@ -43,22 +43,6 @@ export default function Home() {
     else setEventsAtTime(events.filter((e) => e.time === t));
   };
 
-  // Reporter: prompt pour minutes puis déplace le RDV (mock)
-  const handlePostpone = (id) => {
-    const minutesStr = window.prompt("Reporter de combien de minutes ?", "15");
-    if (!minutesStr) return;
-    const minutes = parseInt(minutesStr, 10);
-    if (isNaN(minutes) || minutes <= 0) return toast.error("Valeur invalide");
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, time: minToTime(timeToMin(e.time) + minutes) } : e
-      )
-    );
-    toast.success(`RDV reporté de ${minutes} minutes`);
-    // recalc eventsAtTime if necessary
-    setEventsAtTime((prev) => prev.filter((e) => e.id !== id));
-  };
-
   // When events update, keep eventsAtTime consistent
   useEffect(() => {
     if (!selectedTime) return;
