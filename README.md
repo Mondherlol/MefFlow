@@ -62,7 +62,7 @@ http://clinic1.lvh.me:5173
 ```
 MedFlow/
 ├─ src/
-│  ├─ pages/        → Landing & Super Admin pages
+│  ├─ pages/        → Landing & Users pages
 │  ├─ components/   → Navbar, Footer, etc.
 │  ├─ tenant.js     → Handles subdomain detection
 │  └─ App.jsx       → Routes & structure
@@ -84,8 +84,7 @@ MedFlow/
 
 ## 🧑‍💻 Development Notes
 
-- Make sure the **backend server** is running on port `9000` before testing the Super Admin login.
-- The login form sends a POST request to `http://localhost:9000/api/superadmin/login`.
+- Make sure the **backend server** is running on port `9000` before testing the app.
 
 ---
 
